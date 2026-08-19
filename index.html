@@ -152,7 +152,7 @@
       <select id="f_condition"><option>свежий ремонт</option><option>хорошее</option><option>требует ремонта</option><option>черновая отделка</option></select>
     </div>
     <div class="field"><label>Телефон</label><input type="text" id="f_phone" placeholder="+7 777 123 45 67"></div>
-    <div class="field"><label>Фото квартиры</label><input type="file" id="f_photo" accept="image/*"></div>
+    <div class="field"><label>Фото квартиры (можно выбрать несколько)</label><input type="file" id="f_photo" accept="image/*" multiple></div>
     <div class="field"><label>Описание</label><textarea id="f_desc" placeholder="Расскажи о квартире: ремонт, мебель, район, что рядом…"></textarea></div>
     <div class="checks">
       <label class="check"><input type="checkbox" id="f_isNew"> новостройка</label>
@@ -195,6 +195,7 @@
       <div class="detail-attrs" id="detailInfo"></div>
       <div class="detail-media">
         <div class="detail-photo" id="detailPhoto"></div>
+        <div class="detail-thumbs" id="detailThumbs"></div>
         <div id="detailMap"></div>
       </div>
     </div>

@@ -109,3 +109,10 @@
 .pager button { background: #fff; border: 1px solid #d4b978; border-radius: 8px; padding: 9px 16px; cursor: pointer; font-size: 14px; }
 .pager button:hover:not(:disabled) { background: #f0f0f0; }
 .pager button:disabled { opacity: .45; cursor: default; }
+
+/* Галерея фото */
+.card .photo { position: relative; }
+.photo-count { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.65); color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 8px; }
+.detail-thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.detail-thumbs img { width: 74px; height: 56px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
+.detail-thumbs img.active { border-color: #0a6dd6; }
