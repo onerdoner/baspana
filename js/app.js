@@ -39,6 +39,42 @@ async function refreshAuth() {
   const { data } = await db.auth.getUser();
   currentUser = data.user || null;
   renderAuthUI();
+  await loadFavorites();
+}
+
+/* ИЗБРАННОЕ */
+let favoriteIds = new Set();   // id объявлений, которые лайкнул текущий пользователь
+let favMode = false;           // включён ли режим "показывать только избранное"
+
+async function loadFavorites() {
+  favoriteIds = new Set();
+  if (currentUser) {
+    const { data, error } = await db.from("favorites").select("listing_id");
+    if (!error && data) data.forEach(r => favoriteIds.add(r.listing_id));
+  }
+  updateFavCount();
+}
+function updateFavCount() {
+  const el = document.getElementById("favCount");
+  if (el) el.textContent = "(" + favoriteIds.size + ")";
+}
+// добавить/убрать лайк. Возвращает true/false (новое состояние) или null, если не вошёл.
+async function toggleFavorite(id) {
+  if (!currentUser) { openAuth("Войди, чтобы добавлять в избранное."); return null; }
+  if (favoriteIds.has(id)) {
+    const { error } = await db.from("favorites").delete().eq("listing_id", id);
+    if (error) { alert("Ошибка: " + error.message); return null; }
+    favoriteIds.delete(id);
+    updateFavCount();
+    if (favMode) update();       // в режиме избранного — пересобрать список
+    return false;
+  } else {
+    const { error } = await db.from("favorites").insert({ listing_id: id });
+    if (error) { alert("Ошибка: " + error.message); return null; }
+    favoriteIds.add(id);
+    updateFavCount();
+    return true;
+  }
 }
 function renderAuthUI() {
   const box = document.getElementById("authBox");
@@ -86,6 +122,9 @@ async function signUp() {
 async function logout() {
   await db.auth.signOut();
   currentUser = null; renderAuthUI();
+  favMode = false;
+  document.getElementById("navFav").classList.remove("active");
+  await loadFavorites();
   applyNow();
 }
 
@@ -117,6 +156,11 @@ function rowToItem(row) {
 // строит запрос к базе из текущих фильтров.
 // Каждый .eq/.gte/.lte — это условие, которое база применит сама.
 function buildQuery(query) {
+  // режим "Избранное" — показываем только лайкнутые объявления
+  if (favMode) {
+    const ids = [...favoriteIds];
+    return query.in("id", ids.length ? ids : [-1]);   // -1 = ничего не найдётся
+  }
   const f = getFilters();
   query = query.eq("deal_type", f.deal);
   if (f.city) query = query.eq("city", f.city);
@@ -291,6 +335,7 @@ function renderList(items, total) {
       : `<div class="photo" style="background:${item.color}">${item.hasPhoto ? item.rooms + "-комн." : "нет фото"}</div>`;
     return `
     <div class="card" data-id="${item.id}">
+      <span class="fav ${favoriteIds.has(item.id) ? "on" : ""}" data-fav="${item.id}">♥</span>
       ${photo}
       <div class="info">
         <div class="price">${priceLabel(item)}</div>
@@ -315,6 +360,16 @@ function renderList(items, total) {
   // клик по "удалить" (не открывая страницу)
   grid.querySelectorAll("[data-del]").forEach(el => {
     el.addEventListener("click", (e) => { e.stopPropagation(); deleteListing(+el.dataset.del); });
+  });
+  // клик по сердечку — добавить/убрать из избранного
+  grid.querySelectorAll("[data-fav]").forEach(el => {
+    el.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const state = await toggleFavorite(+el.dataset.fav);
+      if (state === null) return;      // не вошёл
+      if (favMode) return;             // список сам пересоберётся
+      el.classList.toggle("on", state);
+    });
   });
 }
 
@@ -485,6 +540,8 @@ function closeDetail() { document.getElementById("detail").classList.remove("ope
 /* ПЕРЕКЛЮЧЕНИЕ ТИПА СДЕЛКИ */
 function setDeal(d) {
   activeDeal = d;
+  favMode = false;
+  document.getElementById("navFav").classList.remove("active");
   document.querySelectorAll("#deal button").forEach(b => b.classList.toggle("on", b.dataset.d === d));
   document.getElementById("navSale").classList.toggle("active", d === "sale");
   document.getElementById("navRent").classList.toggle("active", d === "rent");
@@ -521,6 +578,15 @@ function updateFormDeal() {
 document.querySelectorAll("#deal button").forEach(btn => btn.addEventListener("click", () => setDeal(btn.dataset.d)));
 document.getElementById("navSale").addEventListener("click", () => setDeal("sale"));
 document.getElementById("navRent").addEventListener("click", () => setDeal("rent"));
+document.getElementById("navFav").addEventListener("click", () => {
+  if (!currentUser) { openAuth("Войди, чтобы смотреть избранное."); return; }
+  favMode = !favMode;
+  document.getElementById("navFav").classList.toggle("active", favMode);
+  document.getElementById("navSale").classList.toggle("active", !favMode && activeDeal === "sale");
+  document.getElementById("navRent").classList.toggle("active", !favMode && activeDeal === "rent");
+  showList();
+  applyNow();
+});
 document.getElementById("f_deal").addEventListener("change", updateFormDeal);
 document.getElementById("logo").addEventListener("click", closeDetail);
 document.getElementById("detailBack").addEventListener("click", closeDetail);
