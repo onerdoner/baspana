@@ -63,7 +63,7 @@ async function signIn() {
   const { error } = await db.auth.signInWithPassword({ email, password: pass });
   if (error) { msg.className = "form-msg err"; msg.textContent = "Не удалось войти: " + error.message; return; }
   msg.className = "form-msg ok"; msg.textContent = "Вход выполнен.";
-  await refreshAuth(); await loadListings(); update();
+  await refreshAuth(); applyNow();
   setTimeout(closeAuth, 700);
 }
 async function signUp() {
@@ -76,7 +76,7 @@ async function signUp() {
   if (error) { msg.className = "form-msg err"; msg.textContent = "Ошибка регистрации: " + error.message; return; }
   if (data.session) {
     msg.className = "form-msg ok"; msg.textContent = "Аккаунт создан, вы вошли.";
-    await refreshAuth(); await loadListings(); update();
+    await refreshAuth(); applyNow();
     setTimeout(closeAuth, 700);
   } else {
     msg.className = "form-msg ok";
@@ -86,17 +86,20 @@ async function signUp() {
 async function logout() {
   await db.auth.signOut();
   currentUser = null; renderAuthUI();
-  await loadListings(); update();
+  applyNow();
 }
 
-/* 1. ЧТЕНИЕ (добавили поля страницы объявления) */
-let LISTINGS = [];
-async function loadListings() {
-  if (!initDb()) return;
-  const { data, error } = await db
-    .from("listings").select("*").order("created_at", { ascending: false });
-  if (error) { showBanner("Ошибка чтения базы: " + error.message); return; }
-  LISTINGS = data.map(row => ({
+/* 1. ЧТЕНИЕ ИЗ БАЗЫ — теперь постранично и с фильтрами на стороне базы.
+   Раньше грузили ВСЕ квартиры и фильтровали в браузере — на десятках тысяч
+   это повесит вкладку. Теперь база сама фильтрует и отдаёт одну страницу. */
+
+const PAGE_SIZE = 24;       // сколько объявлений на одной странице
+let currentPage = 1;        // текущая страница
+let totalCount = 0;         // сколько всего найдено (для пагинации)
+
+// превращает строку из базы (snake_case) в удобный объект (camelCase)
+function rowToItem(row) {
+  return {
     id: row.id, rooms: row.rooms, area: row.area, floor: row.floor,
     floorsTotal: row.floors_total, price: row.price, district: row.district,
     street: row.street, lat: row.lat, lng: row.lng,
@@ -108,7 +111,42 @@ async function loadListings() {
     pets: row.pets_allowed, kids: row.kids_allowed,
     imageUrl: row.image_url, city: row.city || "Алматы",
     date: "18 августа", views: Math.floor(Math.random() * 300),
-  }));
+  };
+}
+
+// строит запрос к базе из текущих фильтров.
+// Каждый .eq/.gte/.lte — это условие, которое база применит сама.
+function buildQuery(query) {
+  const f = getFilters();
+  query = query.eq("deal_type", f.deal);
+  if (f.city) query = query.eq("city", f.city);
+  if (f.district) query = query.eq("district", f.district);
+  if (f.rooms.length) {
+    // 5+ означает "5 и больше". Собираем условие ИЛИ.
+    const parts = f.rooms.map(r => r === 5 ? "rooms.gte.5" : `rooms.eq.${r}`);
+    query = query.or(parts.join(","));
+  }
+  if (f.priceFrom) query = query.gte("price", f.priceFrom);
+  if (f.priceTo !== Infinity) query = query.lte("price", f.priceTo);
+  if (f.areaFrom) query = query.gte("area", f.areaFrom);
+  if (f.areaTo !== Infinity) query = query.lte("area", f.areaTo);
+  if (f.floorFrom) query = query.gte("floor", f.floorFrom);
+  if (f.floorTo !== Infinity) query = query.lte("floor", f.floorTo);
+  if (f.onlyPhoto) query = query.eq("has_photo", true);
+  if (f.onlyNew) query = query.eq("is_new", true);
+  if (f.onlyMine && currentUser) query = query.eq("user_id", currentUser.id);
+  if (f.deal === "rent" && f.rentPeriod !== "any") query = query.eq("rent_period", f.rentPeriod);
+  if (f.furnished === "yes") query = query.eq("furnished", true);
+  if (f.furnished === "no") query = query.eq("furnished", false);
+  if (f.pets) query = query.eq("pets_allowed", true);
+  if (f.kids) query = query.eq("kids_allowed", true);
+  if (f.noFirst) query = query.neq("floor", 1);
+  if (f.noLast) query = query.eq("is_top_floor", false);
+  if (f.text) {
+    const t = f.text.replace(/[(),%]/g, " ").trim();  // убираем спецсимволы
+    if (t) query = query.or(`description.ilike.%${t}%,street.ilike.%${t}%,district.ilike.%${t}%`);
+  }
+  return query;
 }
 
 /* 2. ЗАПИСЬ (добавили новые поля) */
@@ -176,8 +214,8 @@ async function submitListing() {
   btn.disabled = false;
   if (error) { msg.className = "form-msg err"; msg.textContent = "Ошибка: " + error.message; return; }
   msg.className = "form-msg ok"; msg.textContent = "Готово! Объявление добавлено.";
-  setDeal(dealType);
-  await loadListings(); update(); showList();
+  showList();
+  setDeal(dealType);   // setDeal сам сбросит на 1-ю страницу и обновит список
   setTimeout(closeForm, 900);
 }
 
@@ -186,7 +224,7 @@ async function deleteListing(id) {
   if (!confirm("Удалить это объявление?")) return;
   const { error } = await db.from("listings").delete().eq("id", id);
   if (error) { alert("Не удалось удалить: " + error.message); return; }
-  await loadListings(); update();
+  applyNow();
 }
 
 function showBanner(m) {
@@ -235,46 +273,10 @@ function getFilters() {
     text: document.getElementById("textSearch").value.trim().toLowerCase(),
   };
 }
-function applyFilters() {
-  const f = getFilters();
-  return LISTINGS.filter(item => {
-    if (item.dealType !== f.deal) return false;
-    if (f.city && item.city !== f.city) return false;
-    if (f.rooms.length) {
-      const match = f.rooms.some(r => r === 5 ? item.rooms >= 5 : item.rooms === r);
-      if (!match) return false;
-    }
-    if (f.district && item.district !== f.district) return false;
-    if (item.price < f.priceFrom || item.price > f.priceTo) return false;
-    if (item.area < f.areaFrom || item.area > f.areaTo) return false;
-    if (item.floor < f.floorFrom || item.floor > f.floorTo) return false;
-    if (f.onlyPhoto && !item.hasPhoto) return false;
-    if (f.onlyNew && !item.isNew) return false;
-    if (f.onlyMine && (!currentUser || item.userId !== currentUser.id)) return false;
-    // под-режим аренды (месяц/сутки/час)
-    if (f.deal === "rent" && f.rentPeriod !== "any" && item.rentPeriod !== f.rentPeriod) return false;
-    // меблирована
-    if (f.furnished === "yes" && !item.furnished) return false;
-    if (f.furnished === "no" && item.furnished) return false;
-    // можно с детьми / животными
-    if (f.pets && !item.pets) return false;
-    if (f.kids && !item.kids) return false;
-    // этаж
-    if (f.noFirst && item.floor === 1) return false;
-    if (f.noLast && item.floor === item.floorsTotal) return false;
-    // поиск по тексту (в описании, улице, районе)
-    if (f.text) {
-      const hay = ((item.description || "") + " " + item.street + " " + item.district).toLowerCase();
-      if (!hay.includes(f.text)) return false;
-    }
-    return true;
-  });
-}
-
 /* СПИСОК */
-function renderList(items) {
+function renderList(items, total) {
   const grid = document.getElementById("listGrid");
-  document.getElementById("listCount").textContent = "Найдено объявлений: " + items.length;
+  document.getElementById("listCount").textContent = "Найдено объявлений: " + total.toLocaleString("ru-RU").replace(/,/g, " ");
   if (!items.length) {
     grid.innerHTML = '<div class="empty">Ничего не найдено. Попробуйте изменить фильтры.</div>';
     return;
@@ -343,13 +345,53 @@ function showMap() {
   setTimeout(() => map.invalidateSize(), 100);
 }
 
-/* ОБНОВЛЕНИЕ */
-function update() {
-  const items = applyFilters();
-  renderList(items);
-  renderMarkers(items);
-  document.getElementById("btnResults").textContent = "Показать результаты (" + items.length + ")";
+/* ОБНОВЛЕНИЕ — просим у базы одну страницу и рисуем её */
+async function update() {
+  if (!initDb()) return;
+  const from = (currentPage - 1) * PAGE_SIZE;   // первая строка страницы
+  const to = from + PAGE_SIZE - 1;              // последняя строка страницы
+
+  // select с count:"exact" — база вернёт и данные, и общее число найденных
+  let query = buildQuery(db.from("listings").select("*", { count: "exact" }));
+  query = query.order("created_at", { ascending: false }).range(from, to);
+
+  const { data, error, count } = await query;
+  if (error) { showBanner("Ошибка запроса: " + error.message); return; }
+
+  totalCount = count || 0;
+  const items = (data || []).map(rowToItem);
+  renderList(items, totalCount);
+  renderMarkers(items);          // на карте — только текущая страница
+  renderPager(totalCount);
+  document.getElementById("btnResults").textContent =
+    "Показать результаты (" + totalCount.toLocaleString("ru-RU").replace(/,/g, " ") + ")";
 }
+
+/* ПАГИНАЦИЯ — кнопки Назад / Вперёд */
+function renderPager(total) {
+  const el = document.getElementById("pager");
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (total <= PAGE_SIZE) { el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <button id="prevPage" ${currentPage <= 1 ? "disabled" : ""}>← Назад</button>
+    <span>Страница ${currentPage} из ${pages}</span>
+    <button id="nextPage" ${currentPage >= pages ? "disabled" : ""}>Вперёд →</button>`;
+  const prev = document.getElementById("prevPage");
+  const next = document.getElementById("nextPage");
+  if (prev) prev.addEventListener("click", () => { if (currentPage > 1) { currentPage--; update(); document.querySelector(".list").scrollTop = 0; } });
+  if (next) next.addEventListener("click", () => { if (currentPage < pages) { currentPage++; update(); document.querySelector(".list").scrollTop = 0; } });
+}
+
+/* при смене любого фильтра — сбрасываем на 1-ю страницу.
+   Для полей ввода делаем небольшую задержку (debounce),
+   чтобы не дёргать базу на каждую букву. */
+let updateTimer = null;
+function scheduleUpdate() {
+  currentPage = 1;
+  clearTimeout(updateTimer);
+  updateTimer = setTimeout(update, 350);
+}
+function applyNow() { currentPage = 1; update(); }
 
 /* =========================================================
    СТРАНИЦА ОБЪЯВЛЕНИЯ
@@ -434,7 +476,7 @@ function setDeal(d) {
   document.getElementById("rentOnly").style.display = d === "rent" ? "inline-flex" : "none";
   document.getElementById("priceFrom").value = "";
   document.getElementById("priceTo").value = "";
-  update();
+  applyNow();
 }
 
 /* ОКНА */
@@ -473,7 +515,7 @@ document.querySelectorAll("#rooms button").forEach(btn => {
     btn.classList.toggle("on");
     if (activeRooms.includes(r)) activeRooms = activeRooms.filter(x => x !== r);
     else activeRooms.push(r);
-    update();
+    applyNow();
   });
 });
 
@@ -498,7 +540,7 @@ citySel.addEventListener("change", () => {
   fillDistricts(districtSel, citySel.value, true);
   const c = CITIES[citySel.value];
   map.setView(c.center, c.zoom);         // карта переезжает в выбранный город
-  update();
+  applyNow();
 });
 
 // селект города в форме
@@ -511,9 +553,9 @@ cityForm.addEventListener("change", () => fillDistricts(districtForm, cityForm.v
 
 ["district","priceFrom","priceTo","areaFrom","areaTo","floorFrom","floorTo","onlyPhoto","onlyNew","onlyMine",
  "rentPeriod","furnished","fPets","fKids","noFirst","noLast","textSearch"]
-  .forEach(id => document.getElementById(id).addEventListener("input", update));
+  .forEach(id => document.getElementById(id).addEventListener("input", scheduleUpdate));
 
-document.getElementById("btnResults").addEventListener("click", showList);
+document.getElementById("btnResults").addEventListener("click", () => { showList(); applyNow(); });
 document.getElementById("viewList").addEventListener("click", showList);
 document.getElementById("viewMap").addEventListener("click", showMap);
 document.getElementById("btnClear").addEventListener("click", () => {
@@ -527,7 +569,7 @@ document.getElementById("btnClear").addEventListener("click", () => {
   document.getElementById("furnished").value = "any";
   ["fPets","fKids","noFirst","noLast"].forEach(id => document.getElementById(id).checked = false);
   document.getElementById("textSearch").value = "";
-  update();
+  applyNow();
 });
 
 document.getElementById("btnOpenForm").addEventListener("click", () => openForm());
@@ -542,7 +584,6 @@ document.getElementById("authOverlay").addEventListener("click", (e) => { if (e.
 /* СТАРТ */
 async function start() {
   await refreshAuth();
-  await loadListings();
-  update();
+  applyNow();
 }
 start();
