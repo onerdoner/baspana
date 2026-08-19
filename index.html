@@ -73,6 +73,8 @@
     <input type="number" id="floorFrom" placeholder="от" style="width:80px">
     <span class="dash">—</span>
     <input type="number" id="floorTo" placeholder="до" style="width:80px">
+    <span class="flabel">ЖК</span>
+    <select id="complex"><option value="">Любой ЖК</option></select>
   </div>
   <div class="filter-row">
     <!-- эти три показываем только в режиме аренды -->
@@ -142,6 +144,7 @@
     <div class="field"><label>Город</label><select id="f_city"></select></div>
     <div class="field"><label>Район</label><select id="f_district"></select></div>
     <div class="field"><label>Улица</label><input type="text" id="f_street" placeholder="напр. Абая"></div>
+    <div class="field"><label>Жилой комплекс (если есть)</label><select id="f_complex"><option value="">— не указан —</option></select></div>
     <div class="field-row">
       <div class="field"><label>Тип дома</label>
         <select id="f_houseType"><option>монолитный</option><option>панельный</option><option>кирпичный</option><option>иной</option></select>
