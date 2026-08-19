@@ -1,0 +1,27 @@
+{
+  "name": "krisha-website",
+  "version": "1.0.0",
+  "description": "Сайт недвижимости по Алматы: продажа и аренда квартир, фильтры, карта, страницы объявлений, аккаунты и загрузка фото.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onerdoner/baspana.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/onerdoner/baspana/issues"
+  },
+  "homepage": "https://github.com/onerdoner/baspana#readme",
+  "devDependencies": {
+    "vite": "^8.2.1"
+  }
+}
