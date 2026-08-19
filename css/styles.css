@@ -103,3 +103,9 @@
   .detail-desc { margin-top: 28px; }
   .detail-desc h3 { font-size: 20px; margin-bottom: 10px; }
   .detail-desc p { font-size: 15px; line-height: 1.6; white-space: pre-wrap; color: #222; }
+
+/* Пагинация */
+.pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 18px 0 6px; font-size: 14px; color: #555; }
+.pager button { background: #fff; border: 1px solid #d4b978; border-radius: 8px; padding: 9px 16px; cursor: pointer; font-size: 14px; }
+.pager button:hover:not(:disabled) { background: #f0f0f0; }
+.pager button:disabled { opacity: .45; cursor: default; }
