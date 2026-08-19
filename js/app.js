@@ -22,6 +22,10 @@ const CITIES = {
 };
 const COLORS = ["#5b8def","#e07a5f","#81b29a","#f2cc8f","#9d84b7","#e29578","#83c5be"];
 
+// Список жилых комплексов Алматы (для фильтра и формы)
+const COMPLEXES = ["Central Avenue","ALA Park","ALA Town","7Su Nury","AFD Plaza","Esentai Tower",
+  "Dostyk Residence","Nova City","Comfort City","Botanika","Green Park","Hayat Park","Almaly Park","BI City"];
+
 let db = null;
 function initDb() {
   if (SUPABASE_URL.startsWith("PASTE_")) {
@@ -149,6 +153,7 @@ function rowToItem(row) {
     rentPeriod: row.rent_period || "month", furnished: row.furnished,
     pets: row.pets_allowed, kids: row.kids_allowed,
     imageUrl: row.image_url, images: row.images || [], city: row.city || "Алматы",
+    complex: row.complex,
     date: "18 августа", views: Math.floor(Math.random() * 300),
   };
 }
@@ -165,6 +170,7 @@ function buildQuery(query) {
   query = query.eq("deal_type", f.deal);
   if (f.city) query = query.eq("city", f.city);
   if (f.district) query = query.eq("district", f.district);
+  if (f.complex) query = query.eq("complex", f.complex);
   if (f.rooms.length) {
     // 5+ означает "5 и больше". Собираем условие ИЛИ.
     const parts = f.rooms.map(r => r === 5 ? "rooms.gte.5" : `rooms.eq.${r}`);
@@ -207,6 +213,7 @@ async function submitListing() {
   const city = document.getElementById("f_city").value;
   const district = document.getElementById("f_district").value;
   const street = document.getElementById("f_street").value.trim();
+  const complex = document.getElementById("f_complex").value || null;
   const houseType = document.getElementById("f_houseType").value;
   const yearBuilt = +document.getElementById("f_year").value || null;
   const condition = document.getElementById("f_condition").value;
@@ -255,7 +262,7 @@ async function submitListing() {
     condition, phone, description,
     rent_period: dealType === "rent" ? rentPeriod : "month",
     furnished, kids_allowed: kids, pets_allowed: pets,
-    image_url: images[0] || null, images: images.length ? images : null, city,
+    image_url: images[0] || null, images: images.length ? images : null, city, complex,
   });
   btn.disabled = false;
   if (error) { msg.className = "form-msg err"; msg.textContent = "Ошибка: " + error.message; return; }
@@ -301,6 +308,7 @@ function getFilters() {
     deal: activeDeal, rooms: activeRooms,
     city: document.getElementById("city").value,
     district: document.getElementById("district").value,
+    complex: document.getElementById("complex").value,
     priceFrom: +document.getElementById("priceFrom").value || 0,
     priceTo: +document.getElementById("priceTo").value || Infinity,
     areaFrom: +document.getElementById("areaFrom").value || 0,
@@ -469,6 +477,7 @@ function openDetail(item) {
     <div class="attr"><span class="k">Город</span><span class="v">${item.city}, ${item.district} р-н</span></div>
     <div class="attr"><span class="k">Улица</span><span class="v">${item.street}</span></div>
     <div class="attr"><span class="k">Тип дома</span><span class="v">${item.houseType || "—"}</span></div>
+    ${item.complex ? `<div class="attr"><span class="k">Жилой комплекс</span><span class="v">${item.complex}</span></div>` : ""}
     <div class="attr"><span class="k">Год постройки</span><span class="v">${item.yearBuilt || "—"}</span></div>
     <div class="attr"><span class="k">Этаж</span><span class="v">${item.floor} из ${item.floorsTotal}</span></div>
     <div class="attr"><span class="k">Площадь</span><span class="v">${item.area} м²</span></div>
@@ -633,8 +642,16 @@ cityForm.value = "Алматы";
 fillDistricts(districtForm, "Алматы", false);
 cityForm.addEventListener("change", () => fillDistricts(districtForm, cityForm.value, false));
 
+// заполняем списки ЖК (в фильтре и в форме)
+const complexFilter = document.getElementById("complex");
+const complexForm = document.getElementById("f_complex");
+COMPLEXES.forEach(name => {
+  const o1 = document.createElement("option"); o1.value = name; o1.textContent = name; complexFilter.appendChild(o1);
+  const o2 = document.createElement("option"); o2.value = name; o2.textContent = name; complexForm.appendChild(o2);
+});
+
 ["district","priceFrom","priceTo","areaFrom","areaTo","floorFrom","floorTo","onlyPhoto","onlyNew","onlyMine",
- "rentPeriod","furnished","fPets","fKids","noFirst","noLast","textSearch"]
+ "rentPeriod","furnished","fPets","fKids","noFirst","noLast","textSearch","complex"]
   .forEach(id => document.getElementById(id).addEventListener("input", scheduleUpdate));
 
 document.getElementById("btnResults").addEventListener("click", () => { showList(); applyNow(); });
@@ -651,6 +668,7 @@ document.getElementById("btnClear").addEventListener("click", () => {
   document.getElementById("furnished").value = "any";
   ["fPets","fKids","noFirst","noLast"].forEach(id => document.getElementById(id).checked = false);
   document.getElementById("textSearch").value = "";
+  document.getElementById("complex").value = "";
   applyNow();
 });
 
