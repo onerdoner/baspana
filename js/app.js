@@ -109,7 +109,7 @@ function rowToItem(row) {
     phone: row.phone, description: row.description,
     rentPeriod: row.rent_period || "month", furnished: row.furnished,
     pets: row.pets_allowed, kids: row.kids_allowed,
-    imageUrl: row.image_url, city: row.city || "Алматы",
+    imageUrl: row.image_url, images: row.images || [], city: row.city || "Алматы",
     date: "18 августа", views: Math.floor(Math.random() * 300),
   };
 }
@@ -184,32 +184,34 @@ async function submitListing() {
 
   btn.disabled = true; msg.className = "form-msg"; msg.textContent = "Сохраняю…";
 
-  // Загрузка фото в Storage (если выбрали файл)
-  let imageUrl = null;
+  // Загрузка фото в Storage (можно несколько файлов)
+  let images = [];
   const fileInput = document.getElementById("f_photo");
   if (fileInput.files.length) {
     msg.textContent = "Загружаю фото…";
-    const file = fileInput.files[0];
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-    const path = `${currentUser.id}/${Date.now()}.${ext}`;   // уникальное имя файла
-    const up = await db.storage.from("listing-photos").upload(path, file);
-    if (up.error) {
-      btn.disabled = false;
-      msg.className = "form-msg err";
-      msg.textContent = "Не удалось загрузить фото: " + up.error.message;
-      return;
+    for (let i = 0; i < fileInput.files.length; i++) {
+      const file = fileInput.files[i];
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${currentUser.id}/${Date.now()}_${i}.${ext}`;   // уникальное имя
+      const up = await db.storage.from("listing-photos").upload(path, file);
+      if (up.error) {
+        btn.disabled = false;
+        msg.className = "form-msg err";
+        msg.textContent = "Не удалось загрузить фото: " + up.error.message;
+        return;
+      }
+      images.push(db.storage.from("listing-photos").getPublicUrl(path).data.publicUrl);
     }
-    imageUrl = db.storage.from("listing-photos").getPublicUrl(path).data.publicUrl;
   }
 
   const { error } = await db.from("listings").insert({
     rooms, area, floor, floors_total: floorsTotal, price,
-    district, street, lat, lng, is_new: isNew, has_photo: !!imageUrl, color,
+    district, street, lat, lng, is_new: isNew, has_photo: images.length > 0, color,
     deal_type: dealType, house_type: houseType, year_built: yearBuilt,
     condition, phone, description,
     rent_period: dealType === "rent" ? rentPeriod : "month",
     furnished, kids_allowed: kids, pets_allowed: pets,
-    image_url: imageUrl, city,
+    image_url: images[0] || null, images: images.length ? images : null, city,
   });
   btn.disabled = false;
   if (error) { msg.className = "form-msg err"; msg.textContent = "Ошибка: " + error.message; return; }
@@ -283,8 +285,9 @@ function renderList(items, total) {
   }
   grid.innerHTML = items.map(item => {
     const mine = currentUser && item.userId === currentUser.id;
-    const photo = item.imageUrl
-      ? `<div class="photo" style="background-image:url('${item.imageUrl}');background-size:cover;background-position:center"></div>`
+    const imgs = (item.images && item.images.length) ? item.images : (item.imageUrl ? [item.imageUrl] : []);
+    const photo = imgs.length
+      ? `<div class="photo" style="background-image:url('${imgs[0]}');background-size:cover;background-position:center">${imgs.length > 1 ? `<span class="photo-count">${imgs.length} фото</span>` : ""}</div>`
       : `<div class="photo" style="background:${item.color}">${item.hasPhoto ? item.rooms + "-комн." : "нет фото"}</div>`;
     return `
     <div class="card" data-id="${item.id}">
@@ -325,7 +328,8 @@ function renderMarkers(items) {
   items.forEach(item => {
     const icon = L.divIcon({ className: "", html: `<div class="price-pin">${shortPrice(item)}</div>`, iconSize: null });
     const marker = L.marker([item.lat, item.lng], { icon });
-    const popupImg = item.imageUrl ? `<img src="${item.imageUrl}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;margin-bottom:6px">` : "";
+    const firstImg = (item.images && item.images.length) ? item.images[0] : item.imageUrl;
+    const popupImg = firstImg ? `<img src="${firstImg}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;margin-bottom:6px">` : "";
     marker.bindPopup(`${popupImg}<b>${priceLabel(item)}</b><br>${item.rooms}-комн. · ${item.area} м² · ${item.floor}/${item.floorsTotal} эт.<br>${item.district} р-н, ул. ${item.street}`);
     marker.on("click", () => openDetail(item));
     clusterLayer.addLayer(marker);
@@ -422,12 +426,24 @@ function openDetail(item) {
     ${item.isNew ? '<div class="attr"><span class="k">Новостройка</span><span class="v">да</span></div>' : ""}`;
 
   const photo = document.getElementById("detailPhoto");
-  if (item.imageUrl) {
-    photo.style.background = `#000 url('${item.imageUrl}') center/cover no-repeat`;
+  const thumbs = document.getElementById("detailThumbs");
+  const imgs = (item.images && item.images.length) ? item.images : (item.imageUrl ? [item.imageUrl] : []);
+  if (imgs.length) {
+    photo.style.background = `#000 url('${imgs[0]}') center/cover no-repeat`;
     photo.textContent = "";
+    // превью под большим фото; клик меняет главное фото
+    thumbs.innerHTML = imgs.map((u, i) => `<img src="${u}" data-i="${i}" class="${i === 0 ? "active" : ""}">`).join("");
+    thumbs.querySelectorAll("img").forEach(im => {
+      im.addEventListener("click", () => {
+        photo.style.background = `#000 url('${im.src}') center/cover no-repeat`;
+        thumbs.querySelectorAll("img").forEach(x => x.classList.remove("active"));
+        im.classList.add("active");
+      });
+    });
   } else {
     photo.style.background = item.color;
     photo.textContent = item.hasPhoto ? item.rooms + "-комн. квартира" : "нет фото";
+    thumbs.innerHTML = "";
   }
 
   const name = mine ? currentUser.email : "Собственник";
