@@ -428,6 +428,18 @@ async function update() {
   const from = (currentPage - 1) * PAGE_SIZE;   // первая строка страницы
   const to = from + PAGE_SIZE - 1;              // последняя строка страницы
 
+  // Показываем скелетон пока ждём ответа от базы
+  document.getElementById("listCount").textContent = "Загружаю…";
+  document.getElementById("listGrid").innerHTML = Array(6).fill(`
+    <div class="card skeleton">
+      <div class="skeleton-photo"></div>
+      <div class="skeleton-info">
+        <div class="skeleton-line w70"></div>
+        <div class="skeleton-line w50"></div>
+        <div class="skeleton-line w40"></div>
+      </div>
+    </div>`).join("");
+
   // select с count:"exact" — база вернёт и данные, и общее число найденных
   let query = buildQuery(db.from("listings").select("*", { count: "exact" }));
   query = applySort(query).range(from, to);
