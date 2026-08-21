@@ -536,6 +536,7 @@ function openDetail(item) {
 
   document.getElementById("detail").classList.add("open");
   window.scrollTo(0, 0);
+  history.pushState({ listingId: item.id }, '', '#' + item.id);
 
   // мини-карта объявления (создаём один раз, потом переиспользуем)
   setTimeout(() => {
@@ -550,7 +551,18 @@ function openDetail(item) {
     detailMap.invalidateSize();
   }, 120);
 }
-function closeDetail() { document.getElementById("detail").classList.remove("open"); }
+function closeDetail() {
+  document.getElementById("detail").classList.remove("open");
+  if (location.hash) history.pushState({}, '', location.pathname + location.search);
+}
+
+// Загружает одно объявление из базы по ID и открывает его.
+// Нужно для прямых ссылок вида site.com/#12345
+async function loadAndOpenListing(id) {
+  if (!initDb()) return;
+  const { data, error } = await db.from("listings").select("*").eq("id", id).single();
+  if (!error && data) openDetail(rowToItem(data));
+}
 
 /* ПЕРЕКЛЮЧЕНИЕ ТИПА СДЕЛКИ */
 function setDeal(d) {
@@ -699,5 +711,18 @@ document.getElementById("authOverlay").addEventListener("click", (e) => { if (e.
 async function start() {
   await refreshAuth();
   applyNow();
+  // Если в URL есть #12345 — открываем это объявление (работает для расшаренных ссылок)
+  const id = parseInt(location.hash.slice(1));
+  if (id) await loadAndOpenListing(id);
 }
 start();
+
+// Кнопка «Назад» в браузере: закрываем объявление или открываем нужное
+window.addEventListener('popstate', () => {
+  const id = parseInt(location.hash.slice(1));
+  if (id) {
+    loadAndOpenListing(id);
+  } else {
+    document.getElementById("detail").classList.remove("open");
+  }
+});
