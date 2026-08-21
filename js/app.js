@@ -413,6 +413,12 @@ function showMap() {
 }
 
 /* ОБНОВЛЕНИЕ — просим у базы одну страницу и рисуем её */
+let sortBy = "new";   // new | cheap | exp
+function applySort(query) {
+  if (sortBy === "cheap") return query.order("price", { ascending: true });
+  if (sortBy === "exp")   return query.order("price", { ascending: false });
+  return query.order("created_at", { ascending: false });
+}
 async function update() {
   if (!initDb()) return;
   const from = (currentPage - 1) * PAGE_SIZE;   // первая строка страницы
@@ -420,7 +426,7 @@ async function update() {
 
   // select с count:"exact" — база вернёт и данные, и общее число найденных
   let query = buildQuery(db.from("listings").select("*", { count: "exact" }));
-  query = query.order("created_at", { ascending: false }).range(from, to);
+  query = applySort(query).range(from, to);
 
   const { data, error, count } = await query;
   if (error) { showBanner("Ошибка запроса: " + error.message); return; }
@@ -599,6 +605,14 @@ document.getElementById("navFav").addEventListener("click", () => {
 document.getElementById("f_deal").addEventListener("change", updateFormDeal);
 document.getElementById("logo").addEventListener("click", closeDetail);
 document.getElementById("detailBack").addEventListener("click", closeDetail);
+
+document.querySelectorAll("#sortBar button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    sortBy = btn.dataset.sort;
+    document.querySelectorAll("#sortBar button").forEach(b => b.classList.toggle("on", b === btn));
+    applyNow();
+  });
+});
 
 document.querySelectorAll("#rooms button").forEach(btn => {
   btn.addEventListener("click", () => {
