@@ -22,9 +22,13 @@ const CITIES = {
 };
 const COLORS = ["#5b8def","#e07a5f","#81b29a","#f2cc8f","#9d84b7","#e29578","#83c5be"];
 
-// Список жилых комплексов Алматы (для фильтра и формы)
-const COMPLEXES = ["Central Avenue","ALA Park","ALA Town","7Su Nury","AFD Plaza","Esentai Tower",
-  "Dostyk Residence","Nova City","Comfort City","Botanika","Green Park","Hayat Park","Almaly Park","BI City"];
+// Жилые комплексы по городам (для фильтра и формы)
+const COMPLEXES = {
+  "Алматы": ["Central Avenue","ALA Park","ALA Town","7Su Nury","AFD Plaza","Esentai Tower",
+    "Dostyk Residence","Nova City","Comfort City","Botanika","Green Park","Hayat Park","Almaly Park","BI City"],
+  "Астана": ["Triumph Astana","Nurly Tau","Capital Hill","Highvill","Park View","Expo City","Riverside"],
+  "Шымкент": ["Нурлы Жол","Арман","Достык Plaza","Алтын Орда"],
+};
 
 let db = null;
 function initDb() {
@@ -516,7 +520,7 @@ function openDetail(item) {
     thumbs.innerHTML = "";
   }
 
-  const name = mine ? currentUser.email : "Собственник";
+  const name = "Собственник";
   document.getElementById("detailAuthor").innerHTML = `
     <div class="author-box">
       <div style="color:#888;font-size:13px">Автор объявления</div>
@@ -647,14 +651,28 @@ function fillDistricts(selectEl, city, withAll) {
   });
 }
 
+// заполняет список ЖК для выбранного города
+const complexFilter = document.getElementById("complex");
+const complexForm = document.getElementById("f_complex");
+function fillComplexes(city) {
+  complexFilter.innerHTML = '<option value="">Любой ЖК</option>';
+  complexForm.innerHTML = '<option value="">— не указан —</option>';
+  (COMPLEXES[city] || []).forEach(name => {
+    const o1 = document.createElement("option"); o1.value = name; o1.textContent = name; complexFilter.appendChild(o1);
+    const o2 = document.createElement("option"); o2.value = name; o2.textContent = name; complexForm.appendChild(o2);
+  });
+}
+
 // селект города в фильтрах
 const citySel = document.getElementById("city");
 const districtSel = document.getElementById("district");
 cityNames.forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = c; citySel.appendChild(o); });
 citySel.value = "Алматы";
 fillDistricts(districtSel, "Алматы", true);
+fillComplexes("Алматы");
 citySel.addEventListener("change", () => {
   fillDistricts(districtSel, citySel.value, true);
+  fillComplexes(citySel.value);
   const c = CITIES[citySel.value];
   map.setView(c.center, c.zoom);         // карта переезжает в выбранный город
   applyNow();
@@ -666,14 +684,9 @@ const districtForm = document.getElementById("f_district");
 cityNames.forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = c; cityForm.appendChild(o); });
 cityForm.value = "Алматы";
 fillDistricts(districtForm, "Алматы", false);
-cityForm.addEventListener("change", () => fillDistricts(districtForm, cityForm.value, false));
-
-// заполняем списки ЖК (в фильтре и в форме)
-const complexFilter = document.getElementById("complex");
-const complexForm = document.getElementById("f_complex");
-COMPLEXES.forEach(name => {
-  const o1 = document.createElement("option"); o1.value = name; o1.textContent = name; complexFilter.appendChild(o1);
-  const o2 = document.createElement("option"); o2.value = name; o2.textContent = name; complexForm.appendChild(o2);
+cityForm.addEventListener("change", () => {
+  fillDistricts(districtForm, cityForm.value, false);
+  fillComplexes(cityForm.value);
 });
 
 ["district","priceFrom","priceTo","areaFrom","areaTo","floorFrom","floorTo","onlyPhoto","onlyNew","onlyMine",
