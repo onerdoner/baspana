@@ -10,9 +10,6 @@
   header .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
   .btn-add { background: #d63a2f; color: #fff; border: none; border-radius: 8px; padding: 11px 20px; font-size: 15px; font-weight: 600; cursor: pointer; }
   .btn-add:hover { filter: brightness(.92); }
-  .tabs { background: #fff; padding: 0 24px; display: flex; gap: 26px; border-bottom: 1px solid #e5e5e5; font-size: 15px; overflow-x: auto; }
-  .tabs .tab { padding: 14px 0; color: #777; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; }
-  .tabs .tab.active { color: #1a1a1a; border-bottom-color: #0a6dd6; font-weight: 600; }
   .filters { background: #fce9b8; padding: 18px 24px; }
   .filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
   .filter-row:last-child { margin-bottom: 0; }
