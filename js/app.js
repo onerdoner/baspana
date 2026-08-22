@@ -493,7 +493,10 @@ function openDetail(item) {
 
   document.getElementById("detailHead").innerHTML =
     `<div class="detail-title">${item.rooms}-комн. квартира · ${item.area} м² · ${item.floor}/${item.floorsTotal} этаж</div>
-     <div class="detail-price">${priceLabel(item)}</div>`;
+     <div class="detail-price-row">
+       <div class="detail-price">${priceLabel(item)}</div>
+       ${item.isNew ? '<span class="badge-new">Новостройка</span>' : ''}
+     </div>`;
 
   document.getElementById("detailInfo").innerHTML = `
     <div class="attr"><span class="k">Город</span><span class="v">${item.city}, ${item.district} р-н</span></div>
@@ -540,22 +543,21 @@ function openDetail(item) {
     thumbs.innerHTML = "";
   }
 
-  const name = "Собственник";
   document.getElementById("detailAuthor").innerHTML = `
     <div class="author-box">
-      <div style="color:#888;font-size:13px">Автор объявления</div>
-      <div class="name">${name}</div>
-      <div class="role">${item.date} · 👁 ${item.views} просмотров</div>
-      <div class="phone-row"><span id="phoneVal">+7 •••&nbsp;•••</span> <a id="showPhone">Показать телефон</a></div>
+      <div class="author-label">Автор объявления</div>
+      <div class="author-name">Собственник</div>
+      <div class="author-meta">${item.date} · 👁 ${item.views} просмотров</div>
+      <button class="btn-show-phone" id="showPhone">Показать телефон</button>
     </div>`;
 
   document.getElementById("detailDesc").innerHTML =
-    item.description ? `<h3>Описание</h3><p>${item.description}</p>` : "";
+    item.description ? `<h3>О квартире</h3><h3 style="font-size:15px;font-weight:600;margin:16px 0 8px;color:#555">Описание</h3><p>${item.description}</p>` : "";
 
   const sp = document.getElementById("showPhone");
   if (sp) sp.addEventListener("click", () => {
-    document.getElementById("phoneVal").textContent = item.phone || "телефон не указан";
-    sp.style.display = "none";
+    sp.textContent = item.phone || "телефон не указан";
+    sp.classList.add("revealed");
   });
 
   document.getElementById("detail").classList.add("open");
