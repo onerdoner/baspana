@@ -223,11 +223,11 @@ async function submitListing() {
   const condition = document.getElementById("f_condition").value;
   const phone = document.getElementById("f_phone").value.trim();
   const description = document.getElementById("f_desc").value.trim();
-  const isNew = document.getElementById("f_isNew").checked;
+  const isNew = document.getElementById("f_isNew").value === "true";
   const rentPeriod = document.getElementById("f_rentPeriod").value;
-  const furnished = document.getElementById("f_furnished").checked;
-  const kids = document.getElementById("f_kids").checked;
-  const pets = document.getElementById("f_pets").checked;
+  const furnished = document.getElementById("f_furnished").value === "yes";
+  const kids = document.getElementById("f_kids").value === "true";
+  const pets = document.getElementById("f_pets").value === "true";
 
   if (!area || !floor || !floorsTotal || !price || !street) {
     msg.className = "form-msg err"; msg.textContent = "Заполни площадь, этажи, цену и улицу."; return;
@@ -668,11 +668,19 @@ function setDeal(d) {
 function openForm() {
   if (!currentUser) { openAuth("Сначала войди, чтобы подать объявление."); return; }
   document.getElementById("formMsg").textContent = "";
-  document.getElementById("f_deal").value = activeDeal;
+  // Синхронизируем тип сделки с текущим активным
+  const dealHidden = document.getElementById("f_deal");
+  dealHidden.value = activeDeal;
+  document.querySelectorAll(".toggle-group[data-field='f_deal'] .toggle-btn").forEach(b => {
+    b.classList.toggle("on", b.dataset.val === activeDeal);
+  });
   updateFormDeal();
-  document.getElementById("overlay").classList.add("open");
+  document.getElementById("formPage").classList.add("open");
+  window.scrollTo(0, 0);
 }
-function closeForm() { document.getElementById("overlay").classList.remove("open"); }
+function closeForm() {
+  document.getElementById("formPage").classList.remove("open");
+}
 function openAuth(hint) {
   document.getElementById("authMsg").textContent = "";
   document.getElementById("authSub").textContent = hint || "Войди или создай аккаунт, чтобы подавать объявления.";
@@ -682,9 +690,33 @@ function closeAuth() { document.getElementById("authOverlay").classList.remove("
 function updateFormDeal() {
   const isRent = document.getElementById("f_deal").value === "rent";
   document.getElementById("priceHint").textContent = isRent ? "(за месяц/сутки/час)" : "";
-  document.getElementById("f_rentOnly").style.display = isRent ? "block" : "none";
-  document.getElementById("f_rentChecks").style.display = isRent ? "flex" : "none";
+  document.getElementById("f_rentOnly").style.display = isRent ? "flex" : "none";
+  document.getElementById("f_rentChecks").style.display = isRent ? "block" : "none";
 }
+
+// Обработчики для тег-кнопок, переключателей и Да/Нет
+document.querySelectorAll(".tag-group, .toggle-group, .yn-group").forEach(group => {
+  const fieldId = group.dataset.field;
+  group.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      group.querySelectorAll("button").forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
+      if (fieldId) document.getElementById(fieldId).value = btn.dataset.val;
+      if (fieldId === "f_deal") updateFormDeal();
+    });
+  });
+});
+
+// Превью фото при выборе файлов
+document.getElementById("f_photo").addEventListener("change", () => {
+  const preview = document.getElementById("f_photoPreview");
+  preview.innerHTML = "";
+  Array.from(document.getElementById("f_photo").files).forEach(file => {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    preview.appendChild(img);
+  });
+});
 
 /* КНОПКИ И ПОЛЯ */
 document.querySelectorAll("#deal button").forEach(btn => btn.addEventListener("click", () => setDeal(btn.dataset.d)));
@@ -699,7 +731,6 @@ document.getElementById("navFav").addEventListener("click", () => {
   showList();
   applyNow();
 });
-document.getElementById("f_deal").addEventListener("change", updateFormDeal);
 document.getElementById("logo").addEventListener("click", closeDetail);
 document.getElementById("detailBack").addEventListener("click", closeDetail);
 
@@ -795,7 +826,6 @@ document.getElementById("btnClear").addEventListener("click", () => {
 document.getElementById("btnOpenForm").addEventListener("click", () => openForm());
 document.getElementById("btnCancel").addEventListener("click", closeForm);
 document.getElementById("btnSubmit").addEventListener("click", submitListing);
-document.getElementById("overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") closeForm(); });
 document.getElementById("btnSignIn").addEventListener("click", signIn);
 document.getElementById("btnSignUp").addEventListener("click", signUp);
 document.getElementById("authClose").addEventListener("click", closeAuth);

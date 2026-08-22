@@ -118,57 +118,204 @@
   </div>
 </div>
 
-<!-- Форма подачи -->
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <h2>Новое объявление</h2>
-    <div class="sub">Заполни данные квартиры — она появится на сайте сразу.</div>
-    <div class="field"><label>Тип сделки</label>
-      <select id="f_deal"><option value="sale">Продажа</option><option value="rent">Аренда</option></select>
-    </div>
-    <div class="field" id="f_rentOnly" style="display:none"><label>Период аренды</label>
-      <select id="f_rentPeriod"><option value="month">помесячно</option><option value="day">посуточно</option><option value="hour">по часам</option></select>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Комнат</label>
-        <select id="f_rooms"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<!-- Форма подачи — полная страница -->
+<div class="form-page" id="formPage">
+  <div class="form-page-inner">
+
+    <button class="form-page-back" id="btnCancel">← Назад к объявлениям</button>
+    <h1 class="form-page-title">Подать объявление</h1>
+
+    <div class="form-page-body">
+      <div class="form-main">
+
+        <!-- Скрытые поля — читаются при отправке -->
+        <input type="hidden" id="f_deal" value="sale">
+        <input type="hidden" id="f_rooms" value="1">
+        <input type="hidden" id="f_houseType" value="монолитный">
+        <input type="hidden" id="f_condition" value="хорошее">
+        <input type="hidden" id="f_rentPeriod" value="month">
+        <input type="hidden" id="f_isNew" value="false">
+        <input type="hidden" id="f_furnished" value="no">
+        <input type="hidden" id="f_kids" value="false">
+        <input type="hidden" id="f_pets" value="false">
+
+        <!-- СЕКЦИЯ: Основное -->
+        <div class="form-section">
+          <h2 class="form-section-title">Основное</h2>
+
+          <div class="fp-field">
+            <label class="fp-label">Тип сделки</label>
+            <div class="toggle-group" data-field="f_deal">
+              <button class="toggle-btn on" data-val="sale">Продажа</button>
+              <button class="toggle-btn" data-val="rent">Аренда</button>
+            </div>
+          </div>
+
+          <div class="fp-field" id="f_rentOnly" style="display:none">
+            <label class="fp-label">Период аренды</label>
+            <div class="tag-group" data-field="f_rentPeriod">
+              <button class="tag-btn on" data-val="month">Помесячно</button>
+              <button class="tag-btn" data-val="day">Посуточно</button>
+              <button class="tag-btn" data-val="hour">По часам</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Количество комнат *</label>
+            <div class="tag-group" data-field="f_rooms">
+              <button class="tag-btn on" data-val="1">1</button>
+              <button class="tag-btn" data-val="2">2</button>
+              <button class="tag-btn" data-val="3">3</button>
+              <button class="tag-btn" data-val="4">4</button>
+              <button class="tag-btn" data-val="5">5+</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Цена, ₸ * <span id="priceHint" style="color:#999;font-weight:400;font-size:13px"></span></label>
+            <input type="number" id="f_price" placeholder="Например, 45 000 000" class="fp-input">
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Площадь, м² *</label>
+            <input type="number" id="f_area" placeholder="напр. 65" class="fp-input fp-input-sm">
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Этаж</label>
+            <div class="fp-inline">
+              <input type="number" id="f_floor" placeholder="этаж" class="fp-input fp-input-sm">
+              <span class="fp-sep">из</span>
+              <input type="number" id="f_floorsTotal" placeholder="всего" class="fp-input fp-input-sm">
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Тип строения</label>
+            <div class="tag-group" data-field="f_houseType">
+              <button class="tag-btn" data-val="кирпичный">Кирпичный</button>
+              <button class="tag-btn" data-val="панельный">Панельный</button>
+              <button class="tag-btn on" data-val="монолитный">Монолитный</button>
+              <button class="tag-btn" data-val="иной">Иной</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Год постройки</label>
+            <input type="number" id="f_year" placeholder="напр. 2015" class="fp-input fp-input-sm">
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Состояние</label>
+            <div class="tag-group" data-field="f_condition">
+              <button class="tag-btn" data-val="свежий ремонт">Свежий ремонт</button>
+              <button class="tag-btn on" data-val="хорошее">Хорошее</button>
+              <button class="tag-btn" data-val="требует ремонта">Требует ремонта</button>
+              <button class="tag-btn" data-val="черновая отделка">Черновая отделка</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Меблирована</label>
+            <div class="tag-group" data-field="f_furnished">
+              <button class="tag-btn" data-val="yes">Полностью</button>
+              <button class="tag-btn" data-val="partial">Частично</button>
+              <button class="tag-btn on" data-val="no">Без мебели</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Новостройка</label>
+            <div class="yn-group" data-field="f_isNew">
+              <button class="yn-btn" data-val="true">Да</button>
+              <button class="yn-btn on" data-val="false">Нет</button>
+            </div>
+          </div>
+
+          <div id="f_rentChecks" style="display:none">
+            <div class="fp-field">
+              <label class="fp-label">Можно с детьми</label>
+              <div class="yn-group" data-field="f_kids">
+                <button class="yn-btn" data-val="true">Да</button>
+                <button class="yn-btn on" data-val="false">Нет</button>
+              </div>
+            </div>
+            <div class="fp-field">
+              <label class="fp-label">Можно с животными</label>
+              <div class="yn-group" data-field="f_pets">
+                <button class="yn-btn" data-val="true">Да</button>
+                <button class="yn-btn on" data-val="false">Нет</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- СЕКЦИЯ: Расположение -->
+        <div class="form-section">
+          <h2 class="form-section-title">Расположение</h2>
+          <div class="fp-field">
+            <label class="fp-label">Город *</label>
+            <select id="f_city" class="fp-input"></select>
+          </div>
+          <div class="fp-field">
+            <label class="fp-label">Район *</label>
+            <select id="f_district" class="fp-input"></select>
+          </div>
+          <div class="fp-field">
+            <label class="fp-label">Улица *</label>
+            <input type="text" id="f_street" placeholder="напр. Абая" class="fp-input">
+          </div>
+          <div class="fp-field">
+            <label class="fp-label">Жилой комплекс</label>
+            <select id="f_complex" class="fp-input"><option value="">— не указан —</option></select>
+          </div>
+        </div>
+
+        <!-- СЕКЦИЯ: Фотографии -->
+        <div class="form-section">
+          <h2 class="form-section-title">Фотографии</h2>
+          <p class="fp-hint-text">Объявление с фотографиями получает в 5 раз больше просмотров</p>
+          <label class="photo-drop-zone" for="f_photo">
+            <div class="photo-drop-icon">🖼</div>
+            <div class="photo-drop-label">Добавить фото</div>
+            <div class="photo-drop-sub">или перетащите фото сюда</div>
+            <input type="file" id="f_photo" accept="image/*" multiple>
+          </label>
+          <div id="f_photoPreview" class="fp-photo-preview"></div>
+        </div>
+
+        <!-- СЕКЦИЯ: Описание -->
+        <div class="form-section">
+          <h2 class="form-section-title">Текст объявления</h2>
+          <textarea id="f_desc" placeholder="Расскажи о квартире: ремонт, мебель, район, что рядом…" class="fp-textarea"></textarea>
+        </div>
+
+        <!-- СЕКЦИЯ: Контакты -->
+        <div class="form-section">
+          <h2 class="form-section-title">Контактная информация</h2>
+          <div class="fp-field">
+            <label class="fp-label">Телефон *</label>
+            <input type="text" id="f_phone" placeholder="+7 777 123 45 67" class="fp-input">
+          </div>
+        </div>
+
+        <div class="fp-actions">
+          <button class="fp-btn-submit" id="btnSubmit">Опубликовать</button>
+        </div>
+        <div class="form-msg" id="formMsg"></div>
+
+      </div><!-- /form-main -->
+
+      <div class="form-sidebar">
+        <div class="form-tip-box">
+          <div class="form-tip-title">💡 Подсказка</div>
+          <p>Поля со звёздочкой * — обязательные.</p>
+          <p>Добавь фото — объявления с фото просматривают в 5 раз чаще.</p>
+          <p>Укажи подробное описание — это повышает доверие покупателей.</p>
+        </div>
       </div>
-      <div class="field"><label>Площадь, м²</label><input type="number" id="f_area" placeholder="напр. 65"></div>
-    </div>
-    <div class="field-row">
-      <div class="field"><label>Этаж</label><input type="number" id="f_floor" placeholder="напр. 4"></div>
-      <div class="field"><label>Этажей в доме</label><input type="number" id="f_floorsTotal" placeholder="напр. 9"></div>
-    </div>
-    <div class="field"><label>Цена, ₸ <span id="priceHint" style="color:#888"></span></label><input type="number" id="f_price" placeholder="напр. 45000000"></div>
-    <div class="field"><label>Город</label><select id="f_city"></select></div>
-    <div class="field"><label>Район</label><select id="f_district"></select></div>
-    <div class="field"><label>Улица</label><input type="text" id="f_street" placeholder="напр. Абая"></div>
-    <div class="field"><label>Жилой комплекс (если есть)</label><select id="f_complex"><option value="">— не указан —</option></select></div>
-    <div class="field-row">
-      <div class="field"><label>Тип дома</label>
-        <select id="f_houseType"><option>монолитный</option><option>панельный</option><option>кирпичный</option><option>иной</option></select>
-      </div>
-      <div class="field"><label>Год постройки</label><input type="number" id="f_year" placeholder="напр. 2015"></div>
-    </div>
-    <div class="field"><label>Состояние</label>
-      <select id="f_condition"><option>свежий ремонт</option><option>хорошее</option><option>требует ремонта</option><option>черновая отделка</option></select>
-    </div>
-    <div class="field"><label>Телефон</label><input type="text" id="f_phone" placeholder="+7 777 123 45 67"></div>
-    <div class="field"><label>Фото квартиры (можно выбрать несколько)</label><input type="file" id="f_photo" accept="image/*" multiple></div>
-    <div class="field"><label>Описание</label><textarea id="f_desc" placeholder="Расскажи о квартире: ремонт, мебель, район, что рядом…"></textarea></div>
-    <div class="checks">
-      <label class="check"><input type="checkbox" id="f_isNew"> новостройка</label>
-      <label class="check"><input type="checkbox" id="f_furnished"> меблирована</label>
-    </div>
-    <div class="checks" id="f_rentChecks" style="display:none">
-      <label class="check"><input type="checkbox" id="f_kids"> можно с детьми</label>
-      <label class="check"><input type="checkbox" id="f_pets"> можно с животными</label>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-submit" id="btnSubmit">Опубликовать</button>
-      <button class="btn-cancel" id="btnCancel">Отмена</button>
-    </div>
-    <div class="form-msg" id="formMsg"></div>
+
+    </div><!-- /form-page-body -->
   </div>
 </div>
 
