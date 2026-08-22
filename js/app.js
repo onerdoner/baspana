@@ -515,19 +515,27 @@ function openDetail(item) {
   const thumbs = document.getElementById("detailThumbs");
   const imgs = (item.images && item.images.length) ? item.images : (item.imageUrl ? [item.imageUrl] : []);
   if (imgs.length) {
+    let photoIdx = 0;
+    const setPhoto = (i) => {
+      photoIdx = (i + imgs.length) % imgs.length;
+      photo.style.background = `#000 url('${imgs[photoIdx]}') center/cover no-repeat`;
+      thumbs.querySelectorAll("img").forEach((x, j) => x.classList.toggle("active", j === photoIdx));
+    };
     photo.style.background = `#000 url('${imgs[0]}') center/cover no-repeat`;
-    photo.textContent = "";
-    // превью под большим фото; клик меняет главное фото
+    photo.onclick = () => openLightbox(imgs, photoIdx);
+    if (imgs.length > 1) {
+      photo.innerHTML = `<button class="photo-arrow prev">❮</button><button class="photo-arrow next">❯</button>`;
+      photo.querySelector(".prev").onclick = (e) => { e.stopPropagation(); setPhoto(photoIdx - 1); };
+      photo.querySelector(".next").onclick = (e) => { e.stopPropagation(); setPhoto(photoIdx + 1); };
+    } else {
+      photo.innerHTML = "";
+    }
     thumbs.innerHTML = imgs.map((u, i) => `<img src="${u}" data-i="${i}" class="${i === 0 ? "active" : ""}">`).join("");
-    thumbs.querySelectorAll("img").forEach(im => {
-      im.addEventListener("click", () => {
-        photo.style.background = `#000 url('${im.src}') center/cover no-repeat`;
-        thumbs.querySelectorAll("img").forEach(x => x.classList.remove("active"));
-        im.classList.add("active");
-      });
-    });
+    thumbs.querySelectorAll("img").forEach((im, i) => im.addEventListener("click", () => setPhoto(i)));
   } else {
     photo.style.background = item.color;
+    photo.style.cursor = "default";
+    photo.onclick = null;
     photo.textContent = item.hasPhoto ? item.rooms + "-комн. квартира" : "нет фото";
     thumbs.innerHTML = "";
   }
@@ -566,6 +574,8 @@ function openDetail(item) {
     detailMarker = L.marker([item.lat, item.lng]).addTo(detailMap);
     detailMap.invalidateSize();
   }, 120);
+
+  renderSimilar(item);
 }
 function closeDetail() {
   document.getElementById("detail").classList.remove("open");
@@ -578,6 +588,63 @@ async function loadAndOpenListing(id) {
   if (!initDb()) return;
   const { data, error } = await db.from("listings").select("*").eq("id", id).single();
   if (!error && data) openDetail(rowToItem(data));
+}
+
+/* ЛАЙТБОКС */
+let lbImgs = [], lbIdx = 0;
+function openLightbox(imgs, startIdx) {
+  lbImgs = imgs; lbIdx = startIdx;
+  document.getElementById("lbImg").src = lbImgs[lbIdx];
+  const hasMult = lbImgs.length > 1;
+  document.getElementById("lbPrev").style.display = hasMult ? "" : "none";
+  document.getElementById("lbNext").style.display = hasMult ? "" : "none";
+  document.getElementById("lightbox").classList.add("open");
+}
+function lbGo(dir) {
+  lbIdx = (lbIdx + dir + lbImgs.length) % lbImgs.length;
+  document.getElementById("lbImg").src = lbImgs[lbIdx];
+}
+document.getElementById("lbClose").addEventListener("click", () => document.getElementById("lightbox").classList.remove("open"));
+document.getElementById("lbPrev").addEventListener("click", () => lbGo(-1));
+document.getElementById("lbNext").addEventListener("click", () => lbGo(1));
+document.getElementById("lightbox").addEventListener("click", (e) => { if (e.target.id === "lightbox") document.getElementById("lightbox").classList.remove("open"); });
+document.addEventListener("keydown", (e) => {
+  if (!document.getElementById("lightbox").classList.contains("open")) return;
+  if (e.key === "ArrowLeft")  lbGo(-1);
+  if (e.key === "ArrowRight") lbGo(1);
+  if (e.key === "Escape") document.getElementById("lightbox").classList.remove("open");
+});
+
+/* ПОХОЖИЕ ОБЪЯВЛЕНИЯ */
+async function renderSimilar(item) {
+  const el = document.getElementById("detailSimilar");
+  if (!el || !initDb()) return;
+  el.innerHTML = "";
+  const { data } = await db.from("listings").select("*")
+    .eq("deal_type", item.dealType)
+    .eq("district", item.district)
+    .neq("id", item.id)
+    .order("created_at", { ascending: false })
+    .limit(6);
+  if (!data || !data.length) return;
+  const items = data.map(rowToItem);
+  el.innerHTML = `<h3 class="similar-title">Похожие объявления</h3>
+    <div class="similar-grid">${items.map(x => {
+      const imgs = (x.images && x.images.length) ? x.images : (x.imageUrl ? [x.imageUrl] : []);
+      const bg = imgs.length ? `url('${imgs[0]}')` : "none";
+      return `<div class="similar-card" data-id="${x.id}">
+        <div class="similar-photo" style="background-image:${bg};background-color:${x.color}"></div>
+        <div class="similar-price">${priceLabel(x)}</div>
+        <div class="similar-meta">${x.rooms}-комн. · ${x.area} м² · ${x.floor}/${x.floorsTotal} эт.</div>
+        <div class="similar-addr">${x.district} р-н</div>
+      </div>`;
+    }).join("")}</div>`;
+  el.querySelectorAll(".similar-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const found = items.find(x => x.id === +card.dataset.id);
+      if (found) openDetail(found);
+    });
+  });
 }
 
 /* ПЕРЕКЛЮЧЕНИЕ ТИПА СДЕЛКИ */

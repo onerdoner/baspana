@@ -90,7 +90,11 @@
   .attr .k { color: #888; }
   .attr .v { color: #1a1a1a; text-align: right; }
   .detail-media { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 14px; }
-  .detail-photo { height: 300px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 700; }
+  .detail-photo { height: 300px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 700; position: relative; overflow: hidden; cursor: zoom-in; }
+  .photo-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,.45); border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 10px 14px; border-radius: 6px; z-index: 2; transition: background .15s; }
+  .photo-arrow:hover { background: rgba(0,0,0,.72); }
+  .photo-arrow.prev { left: 10px; }
+  .photo-arrow.next { right: 10px; }
   #detailMap { height: 220px; border-radius: 12px; }
   .author-box { border: 1px solid #eee; border-radius: 12px; padding: 16px; margin-top: 22px; max-width: 380px; }
   .author-box .name { font-weight: 700; font-size: 17px; word-break: break-all; }
@@ -118,6 +122,26 @@
 .fav { position: absolute; top: 8px; right: 12px; font-size: 20px; line-height: 1; cursor: pointer; color: #d0d0d0; z-index: 2; text-shadow: 0 1px 2px rgba(0,0,0,.15); }
 .fav:hover { color: #f0a6b8; }
 .fav.on { color: #e0245e; }
+
+/* Лайтбокс */
+.lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.93); z-index: 3000; display: none; align-items: center; justify-content: center; }
+.lightbox.open { display: flex; }
+.lb-img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 6px; user-select: none; }
+.lb-close { position: absolute; top: 16px; right: 20px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; line-height: 1; }
+.lb-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,.15); border: none; color: #fff; font-size: 28px; cursor: pointer; padding: 14px 18px; border-radius: 8px; transition: background .15s; }
+.lb-arrow:hover { background: rgba(255,255,255,.3); }
+.lb-prev { left: 20px; }
+.lb-next { right: 20px; }
+
+/* Похожие объявления */
+.similar-title { font-size: 20px; font-weight: 700; margin: 36px 0 16px; }
+.similar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.similar-card { border: 1px solid #eee; border-radius: 10px; overflow: hidden; cursor: pointer; background: #fff; }
+.similar-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.10); }
+.similar-photo { height: 110px; background: #ddd center/cover no-repeat; }
+.similar-price { font-size: 15px; font-weight: 700; padding: 8px 10px 2px; }
+.similar-meta { font-size: 13px; color: #0a6dd6; padding: 0 10px 2px; }
+.similar-addr { font-size: 12px; color: #888; padding: 0 10px 10px; }
 
 /* Скелетон-загрузка */
 @keyframes shimmer {
@@ -189,6 +213,7 @@
   .detail-attrs { order: 2; min-width: 0; width: 100%; }
   .detail-photo { height: 240px; }
   #detailMap { height: 180px; }
+  .similar-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .author-box { max-width: 100%; }
 
   /* Модалки */
