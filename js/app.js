@@ -334,7 +334,10 @@ function getFilters() {
 /* СПИСОК */
 function renderList(items, total) {
   const grid = document.getElementById("listGrid");
-  document.getElementById("listCount").textContent = "Найдено объявлений: " + total.toLocaleString("ru-RU").replace(/,/g, " ");
+  const cityName = document.getElementById("city").value;
+  const dealLabel = activeDeal === "sale" ? "Продажа" : "Аренда";
+  document.getElementById("listTitle").textContent = `${dealLabel} квартир в ${cityName}`;
+  document.getElementById("listCount").textContent = "Найдено " + total.toLocaleString("ru-RU").replace(/,/g, " ") + " объявлений";
   if (!items.length) {
     grid.innerHTML = '<div class="empty">Ничего не найдено. Попробуйте изменить фильтры.</div>';
     return;
@@ -344,7 +347,7 @@ function renderList(items, total) {
     const imgs = (item.images && item.images.length) ? item.images : (item.imageUrl ? [item.imageUrl] : []);
     const photo = imgs.length
       ? `<div class="photo" style="background-image:url('${imgs[0]}');background-size:cover;background-position:center">${imgs.length > 1 ? `<span class="photo-count">${imgs.length} фото</span>` : ""}</div>`
-      : `<div class="photo" style="background:${item.color}">${item.hasPhoto ? item.rooms + "-комн." : "нет фото"}</div>`;
+      : `<div class="photo" style="background:${item.color}"><span class="card-room-label">${item.rooms}-комн.</span></div>`;
     return `
     <div class="card" data-id="${item.id}">
       <span class="fav ${favoriteIds.has(item.id) ? "on" : ""}" data-fav="${item.id}">♥</span>
@@ -354,8 +357,9 @@ function renderList(items, total) {
         <div class="title">${item.rooms}-комн. квартира · ${item.area} м² · ${item.floor}/${item.floorsTotal} этаж</div>
         <div class="addr">${item.district} р-н, ул. ${item.street}</div>
         <div class="meta">
-          <span>${item.date}</span><span>👁 ${item.views}</span>
-          ${item.isNew ? "<span style='color:#2a9d3a'>новостройка</span>" : ""}
+          <span>${item.date}</span>
+          <span>👁 ${item.views}</span>
+          ${item.isNew ? "<span class='card-new'>новостройка</span>" : ""}
           ${mine ? `<span class="del" data-del="${item.id}">удалить</span>` : ""}
         </div>
       </div>

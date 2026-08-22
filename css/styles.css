@@ -38,19 +38,34 @@
   #map { flex: 1; }
   body.list-only #map { display: none; }
   body.list-only .list { flex: 1; max-width: 100%; }
-  body.list-only .list-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
-  .list { width: 420px; overflow-y: auto; background: #fff; border-left: 1px solid #e5e5e5; padding: 16px; }
-  .list-count { font-size: 14px; color: #777; margin-bottom: 12px; }
-  .list-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-  .card { display: flex; gap: 12px; border: 1px solid #eee; border-radius: 10px; padding: 10px; position: relative; cursor: pointer; }
-  .card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.10); }
-  .card .photo { width: 130px; height: 100px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 600; }
+  .list { width: 420px; overflow-y: auto; background: #f5f5f5; border-left: 1px solid #e5e5e5; padding: 16px; }
+  .list-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; color: #1a1a1a; }
+  .list-count { font-size: 14px; color: #888; margin-bottom: 14px; }
+  .list-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+  /* Карточки в режиме карты — горизонтальные (в узкой боковой панели) */
+  .card { display: flex; flex-direction: row; gap: 12px; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px; position: relative; cursor: pointer; overflow: hidden; }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.10); }
+  .card .photo { width: 120px; height: 90px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; }
   .card .info { flex: 1; min-width: 0; }
-  .card .price { font-size: 19px; font-weight: 700; }
-  .card .title { color: #0a6dd6; font-size: 14px; margin: 4px 0; }
-  .card .addr { color: #555; font-size: 13px; }
-  .card .meta { color: #999; font-size: 12px; margin-top: 8px; display: flex; gap: 12px; align-items: center; }
+  .card .price { font-size: 16px; font-weight: 700; }
+  .card .title { color: #555; font-size: 13px; margin: 3px 0 2px; }
+  .card .addr { color: #888; font-size: 12px; }
+  .card .meta { color: #bbb; font-size: 11px; margin-top: 6px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .card-room-label { color: rgba(255,255,255,.9); font-size: 16px; font-weight: 700; }
+  .card-new { color: #2a9d3a; font-weight: 600; }
   .del { color: #c22; cursor: pointer; text-decoration: underline; }
+
+  /* Карточки в режиме списка — вертикальные (4 колонки) */
+  body.list-only .list { background: #f5f5f5; }
+  body.list-only .list-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+  body.list-only .card { flex-direction: column; gap: 0; padding: 0; border-radius: 12px; }
+  body.list-only .card .photo { width: 100%; height: 170px; border-radius: 0; border-top-left-radius: 12px; border-top-right-radius: 12px; }
+  body.list-only .card .info { padding: 10px 12px 12px; }
+  body.list-only .card .price { font-size: 17px; font-weight: 700; }
+  body.list-only .card .title { color: #555; font-size: 13px; margin: 4px 0 2px; }
+  body.list-only .card .addr { color: #888; font-size: 12px; }
+  body.list-only .card .meta { font-size: 11px; margin-top: 8px; }
   .price-pin { background: #fff; border: 1.5px solid #0a6dd6; color: #0a6dd6; font-weight: 700; font-size: 13px; padding: 5px 9px; border-radius: 16px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
   .empty { color: #999; text-align: center; padding: 40px 20px; }
   .banner { background: #ffe1e1; color: #a11; padding: 12px 24px; font-size: 14px; display: none; }
@@ -260,14 +275,11 @@
   .content { flex-direction: column; height: auto; min-height: 0; }
   .list { width: 100%; overflow-y: visible; }
   body.list-only .list { max-width: 100%; }
-  body.list-only .list-grid { grid-template-columns: 1fr; }
+  body.list-only .list-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  body.list-only .card .photo { height: 130px; }
 
   /* В режиме карты: карта занимает половину экрана, список ниже */
   #map { height: 50vh; }
-
-  /* Карточки */
-  .card .photo { width: 110px; height: 90px; }
-  .card .price { font-size: 17px; }
 
   /* Страница объявления: колонки складываются, фото первым */
   .detail-inner { padding: 16px 16px 40px; }
@@ -299,11 +311,8 @@
 
   .filters { padding: 10px 14px; }
 
-  .card { gap: 10px; padding: 8px; }
-  .card .photo { width: 95px; height: 80px; }
-  .card .price { font-size: 15px; }
-  .card .title { font-size: 13px; }
-  .card .meta { gap: 8px; }
+  body.list-only .list-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  body.list-only .card .photo { height: 110px; }
 
   .detail-photo { height: 200px; }
   .detail-title { font-size: 18px; }
