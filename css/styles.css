@@ -367,6 +367,7 @@
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
+  margin-left: auto;
 }
 .btn-find:hover { background: var(--blue-dark); }
 
