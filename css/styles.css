@@ -323,3 +323,143 @@
   .pager { gap: 8px; }
   .pager button { padding: 8px 12px; }
 }
+
+/* =====================
+   ПАНЕЛЬ ФИЛЬТРОВ: новые элементы
+   ===================== */
+
+/* Кнопка-заменитель селекта города */
+.city-btn {
+  height: 38px;
+  border: 1px solid #d4b978;
+  border-radius: 6px;
+  padding: 0 14px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #1a1a1a;
+}
+.city-btn:hover { border-color: #0a6dd6; color: #0a6dd6; }
+
+/* Синяя кнопка "Найти" */
+.btn-find {
+  height: 38px;
+  background: #0a6dd6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-find:hover { background: #095cb5; }
+
+/* Белая кнопка "На карте" */
+.btn-map-inline {
+  height: 38px;
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid #d4b978;
+  border-radius: 6px;
+  padding: 0 16px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-map-inline:hover { background: #fdf4d8; }
+
+/* Строка с галочками: переключатель вида — вправо */
+.filter-row-checks { margin-bottom: 0; }
+.filter-row-checks .view-toggle { margin-left: auto; }
+
+/* =====================
+   МОДАЛЬНОЕ ОКНО ГОРОДА
+   ===================== */
+.city-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 2000;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+}
+.city-modal-overlay.open { display: flex; }
+.city-modal-panel {
+  background: #fff;
+  border-radius: 12px;
+  width: 660px;
+  max-width: 96vw;
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+  overflow: hidden;
+}
+.city-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+.city-modal-title { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+.city-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #888;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.city-modal-close:hover { color: #333; }
+.city-modal-body { display: flex; flex: 1; overflow: hidden; }
+.city-modal-cities {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid #eee;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.city-modal-districts {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.city-option, .dist-option {
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+.city-option:hover, .dist-option:hover { background: #f5f5f5; }
+.city-option.active { color: #0a6dd6; font-weight: 700; background: #f0f7ff; }
+.dist-option.active { color: #0a6dd6; font-weight: 600; background: #f0f7ff; }
+.city-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+.city-modal-btn {
+  background: #0a6dd6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 32px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.city-modal-btn:hover { background: #095cb5; }

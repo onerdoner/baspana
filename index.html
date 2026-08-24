@@ -33,12 +33,13 @@
 
 
 <div class="filters">
+
+  <!-- Строка 1: тип сделки, комнаты, город, цена, кнопки -->
   <div class="filter-row">
     <div class="deal" id="deal">
       <button data-d="sale" class="on">Купить</button>
       <button data-d="rent">Снять</button>
     </div>
-    <span class="flabel">Комнат</span>
     <div class="rooms" id="rooms">
       <button data-r="1">1</button>
       <button data-r="2">2</button>
@@ -46,59 +47,76 @@
       <button data-r="4">4</button>
       <button data-r="5">5+</button>
     </div>
-    <span class="flabel">Район</span>
-    <select id="city"></select>
-    <select id="district"><option value="">Все районы</option></select>
+    <!-- Скрытые селекты — app.js читает их значения для фильтрации -->
+    <select id="city" hidden></select>
+    <select id="district" hidden><option value="">Все районы</option></select>
+    <!-- Визуальная кнопка выбора города -->
+    <button class="city-btn" id="cityBtn">Алматы ▾</button>
     <span class="flabel">Цена, ₸</span>
     <input type="number" id="priceFrom" placeholder="от">
     <span class="dash">—</span>
     <input type="number" id="priceTo" placeholder="до">
+    <button class="btn-find" id="btnResults">Найти</button>
+    <button class="btn-map-inline" id="btnMapInline">На карте</button>
+  </div>
+
+  <!-- Строка 2: галочки + переключатель вида -->
+  <div class="filter-row filter-row-checks">
     <label class="check"><input type="checkbox" id="onlyPhoto"> есть фото</label>
     <label class="check"><input type="checkbox" id="onlyNew"> новостройки</label>
-    <label class="check" id="myToggleWrap"><input type="checkbox" id="onlyMine"> мои объявления</label>
+    <label class="check"><input type="checkbox" id="onlyOwner"> от хозяев</label>
+    <label class="check"><input type="checkbox" id="onlyAgency"> От Крыша Агентов</label>
+    <!-- Скрыто: app.js показывает этот пункт авторизованным пользователям -->
+    <label class="check" id="myToggleWrap" style="display:none"><input type="checkbox" id="onlyMine"> мои объявления</label>
+    <div class="view-toggle">
+      <button id="viewList" class="on">Списком</button>
+      <button id="viewMap">На карте</button>
+    </div>
   </div>
-  <div class="filter-row">
-    <span class="flabel">Площадь, м²</span>
-    <input type="number" id="areaFrom" placeholder="от">
-    <span class="dash">—</span>
-    <input type="number" id="areaTo" placeholder="до">
-    <span class="flabel">Этаж</span>
-    <input type="number" id="floorFrom" placeholder="от" style="width:80px">
-    <span class="dash">—</span>
-    <input type="number" id="floorTo" placeholder="до" style="width:80px">
-    <span class="flabel">ЖК</span>
-    <select id="complex"><option value="">Любой ЖК</option></select>
-  </div>
-  <div class="filter-row">
-    <!-- эти три показываем только в режиме аренды -->
-    <span id="rentOnly" style="display:none;align-items:center;gap:14px">
-      <span class="flabel">Период</span>
+
+  <!-- Скрытые элементы: не видны пользователю, но нужны app.js -->
+  <div style="display:none">
+    <span id="rentOnly">
       <select id="rentPeriod">
         <option value="any">любой</option>
         <option value="month">помесячно</option>
         <option value="day">посуточно</option>
         <option value="hour">по часам</option>
       </select>
-      <label class="check"><input type="checkbox" id="fKids"> можно с детьми</label>
-      <label class="check"><input type="checkbox" id="fPets"> можно с животными</label>
+      <input type="checkbox" id="fKids">
+      <input type="checkbox" id="fPets">
     </span>
-    <span class="flabel">Мебель</span>
+    <input type="number" id="areaFrom">
+    <input type="number" id="areaTo">
+    <input type="number" id="floorFrom">
+    <input type="number" id="floorTo">
+    <select id="complex"><option value="">Любой ЖК</option></select>
     <select id="furnished">
       <option value="any">не важно</option>
       <option value="yes">меблирована</option>
       <option value="no">без мебели</option>
     </select>
-    <label class="check"><input type="checkbox" id="noFirst"> не первый этаж</label>
-    <label class="check"><input type="checkbox" id="noLast"> не последний этаж</label>
-    <span class="flabel">Поиск</span>
-    <input type="text" id="textSearch" placeholder="слово в описании" style="width:220px">
+    <input type="checkbox" id="noFirst">
+    <input type="checkbox" id="noLast">
+    <input type="text" id="textSearch">
+    <button id="btnClear">Очистить всё</button>
   </div>
-  <div class="filter-actions">
-    <button class="btn-results" id="btnResults">Показать результаты</button>
-    <button class="btn-clear" id="btnClear">Очистить всё</button>
-    <div class="view-toggle">
-      <button id="viewList" class="on">Списком</button>
-      <button id="viewMap">На карте</button>
+
+</div>
+
+<!-- Модальное окно выбора города -->
+<div class="city-modal-overlay" id="cityModal">
+  <div class="city-modal-panel">
+    <div class="city-modal-head">
+      <span class="city-modal-title">Выберите город или регион</span>
+      <button class="city-modal-close" id="cityModalClose">✕</button>
+    </div>
+    <div class="city-modal-body">
+      <ul class="city-modal-cities" id="cityModalList"></ul>
+      <ul class="city-modal-districts" id="districtModalList"></ul>
+    </div>
+    <div class="city-modal-footer">
+      <button class="city-modal-btn" id="cityModalSelect">Выбрать</button>
     </div>
   </div>
 </div>
