@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>baspana.kz — недвижимость в Казахстане</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap">
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
@@ -19,20 +23,23 @@
 <div class="banner" id="banner"></div>
 
 <header>
-  <div class="logo" id="logo">baspana<span>.kz</span></div>
-  <nav>
-    <a id="navSale" class="active">Продажа</a>
-    <a id="navRent">Аренда</a>
-    <a id="navFav">Избранное <span id="favCount">(0)</span></a>
-  </nav>
-  <div class="right">
-    <button class="btn-add" id="btnOpenForm">Подать объявление</button>
-    <div id="authBox" style="display:flex;align-items:center;gap:10px"></div>
+  <div class="container">
+    <div class="logo" id="logo">baspana<span>.kz</span></div>
+    <nav>
+      <a id="navSale" class="active">Продажа</a>
+      <a id="navRent">Аренда</a>
+      <a id="navFav">Избранное <span id="favCount">(0)</span></a>
+    </nav>
+    <div class="right">
+      <button class="btn-add" id="btnOpenForm">Подать объявление</button>
+      <div id="authBox" style="display:flex;align-items:center;gap:10px"></div>
+    </div>
   </div>
 </header>
 
 
 <div class="filters">
+  <div class="container">
   <div class="filter-row">
     <div class="deal" id="deal">
       <button data-d="sale" class="on">Купить</button>
@@ -100,6 +107,7 @@
       <button id="viewList" class="on">Списком</button>
       <button id="viewMap">На карте</button>
     </div>
+  </div>
   </div>
 </div>
 
