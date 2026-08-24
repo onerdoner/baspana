@@ -64,7 +64,7 @@
     <label class="check"><input type="checkbox" id="onlyNew"> новостройки</label>
     <label class="check" id="myToggleWrap"><input type="checkbox" id="onlyMine"> мои объявления</label>
   </div>
-  <div class="filter-row">
+  <div class="filter-row filter-row--hidden">
     <span class="flabel">Площадь, м²</span>
     <input type="number" id="areaFrom" placeholder="от">
     <span class="dash">—</span>
@@ -76,7 +76,7 @@
     <span class="flabel">ЖК</span>
     <select id="complex"><option value="">Любой ЖК</option></select>
   </div>
-  <div class="filter-row">
+  <div class="filter-row filter-row--hidden">
     <!-- эти три показываем только в режиме аренды -->
     <span id="rentOnly" style="display:none;align-items:center;gap:14px">
       <span class="flabel">Период</span>

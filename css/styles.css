@@ -23,20 +23,21 @@
   header .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
   .btn-add { background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .btn-add:hover { filter: brightness(.92); }
-  .filters { background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
-  .filters .container { padding: 18px 0; }
+  .filters { background: #fce9b8; border-bottom: 1px solid #e8d49a; }
+  .filters .container { padding: 14px 0; }
+  .filter-row--hidden { display: none; }
   .filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
   .filter-row:last-child { margin-bottom: 0; }
   .flabel { font-size: 13px; color: var(--text-muted); }
-  .deal { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .deal { display: flex; border: 1px solid #d4b978; border-radius: 6px; overflow: hidden; }
   .deal button { background: var(--bg); border: none; padding: 9px 20px; cursor: pointer; font-size: 13px; color: var(--text); }
   .deal button.on { background: var(--blue); color: #fff; }
   .rooms { display: flex; }
-  .rooms button { width: 40px; height: 38px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 14px; border-right: none; }
+  .rooms button { width: 40px; height: 38px; border: 1px solid #d4b978; background: var(--bg); cursor: pointer; font-size: 14px; border-right: none; }
   .rooms button:first-child { border-radius: 6px 0 0 6px; }
-  .rooms button:last-child { border-radius: 0 6px 6px 0; border-right: 1px solid var(--border); }
+  .rooms button:last-child { border-radius: 0 6px 6px 0; border-right: 1px solid #d4b978; }
   .rooms button.on { background: var(--blue); color: #fff; border-color: var(--blue); }
-  input[type=text], input[type=number], select { height: 38px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; font-size: 13px; background: var(--bg); width: 110px; }
+  input[type=text], input[type=number], select { height: 38px; border: 1px solid #d4b978; border-radius: 6px; padding: 0 10px; font-size: 13px; background: var(--bg); width: 110px; }
   select { width: 170px; }
   .dash { color: #999; }
   .check { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
@@ -45,7 +46,7 @@
   .btn-results:hover { background: var(--blue-dark); }
   .btn-clear { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 13px; text-decoration: underline; }
   #myToggleWrap { display: none; }
-  .view-toggle { margin-left: auto; display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .view-toggle { margin-left: auto; display: flex; border: 1px solid #d4b978; border-radius: 6px; overflow: hidden; }
   .view-toggle button { background: var(--bg); border: none; padding: 10px 20px; cursor: pointer; font-size: 13px; color: var(--text); }
   .view-toggle button.on { background: #f0f0f0; color: var(--text); font-weight: 600; }
   .content { display: flex; height: calc(100vh - 260px); min-height: 500px; max-width: 1260px; margin: 0 auto; width: 100%; }
