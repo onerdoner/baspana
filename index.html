@@ -47,14 +47,6 @@
         <button data-d="sale" class="on">Купить</button>
         <button data-d="rent">Арендовать</button>
       </div>
-      <span id="rentOnly" style="display:none">
-        <select id="rentPeriod">
-          <option value="any">Период</option>
-          <option value="month">Помесячно</option>
-          <option value="day">Посуточно</option>
-          <option value="hour">По часам</option>
-        </select>
-      </span>
       <div class="rooms" id="rooms">
         <button data-r="1">1</button>
         <button data-r="2">2</button>
@@ -66,6 +58,14 @@
       <select id="city" hidden></select>
       <select id="district" hidden><option value="">Все районы</option></select>
       <button class="city-btn" id="cityBtn">Алматы ▾</button>
+      <span id="rentOnly" style="display:none">
+        <select id="rentPeriod">
+          <option value="any">Период</option>
+          <option value="month">Помесячно</option>
+          <option value="day">Посуточно</option>
+          <option value="hour">По часам</option>
+        </select>
+      </span>
       <span class="flabel">Цена, ₸</span>
       <input type="number" id="priceFrom" placeholder="от">
       <span class="dash">—</span>

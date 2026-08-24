@@ -385,10 +385,28 @@
 
 .filter-row-checks { margin-bottom: 0; }
 
+/* Первый ряд не переносится никогда — ни в аренде, ни в продаже */
+.filter-row:not(.filter-row-checks) {
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+
+/* Кнопки и блоки, которые не должны сжиматься */
+.deal, #rentOnly, .rooms, .city-btn, .btn-find, .btn-map-inline {
+  flex-shrink: 0;
+}
+
+/* «Арендовать» чуть длиннее «Снять» — уменьшаем padding deal-кнопок */
+.deal button { padding: 9px 13px; }
+
+/* Фиксированная ширина полей цены, чтобы не распирали строку */
+#priceFrom, #priceTo { width: 72px; }
+
 #rentOnly { display: none; align-items: center; }
 #rentOnly select {
+  width: 110px;
   height: 32px;
-  padding: 0 8px;
+  padding: 0 6px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #fff;
