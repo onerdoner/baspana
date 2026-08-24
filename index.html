@@ -55,7 +55,6 @@
     <input type="number" id="priceTo" placeholder="до">
     <label class="check"><input type="checkbox" id="onlyPhoto"> есть фото</label>
     <label class="check"><input type="checkbox" id="onlyNew"> новостройки</label>
-    <label class="check" id="myToggleWrap"><input type="checkbox" id="onlyMine"> мои объявления</label>
   </div>
   <div class="filter-row">
     <span class="flabel">Площадь, м²</span>
@@ -96,10 +95,12 @@
   <div class="filter-actions">
     <button class="btn-results" id="btnResults">Показать результаты</button>
     <button class="btn-clear" id="btnClear">Очистить всё</button>
-    <div class="view-toggle">
-      <button id="viewList" class="on">Списком</button>
-      <button id="viewMap">На карте</button>
-    </div>
+  </div>
+  <!-- app.js требует эти элементы в DOM -->
+  <div style="display:none">
+    <label id="myToggleWrap"><input type="checkbox" id="onlyMine"></label>
+    <button id="viewList">Списком</button>
+    <button id="viewMap">На карте</button>
   </div>
 </div>
 
