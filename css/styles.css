@@ -367,7 +367,6 @@
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  margin-left: auto;
 }
 .btn-find:hover { background: var(--blue-dark); }
 
@@ -400,8 +399,8 @@
 /* «Арендовать» чуть длиннее «Снять» — уменьшаем padding deal-кнопок */
 .deal button { padding: 9px 13px; }
 
-/* Фиксированная ширина полей цены, чтобы не распирали строку */
-#priceFrom, #priceTo { width: 72px; }
+/* Поля цены растягиваются, заполняя свободное место в строке */
+#priceFrom, #priceTo { width: 72px; flex-grow: 1; }
 
 #rentOnly { display: none; align-items: center; }
 #rentOnly select {
