@@ -338,3 +338,138 @@
   .pager { gap: 8px; }
   .pager button { padding: 8px 12px; }
 }
+
+/* =====================
+   НОВАЯ ПАНЕЛЬ ФИЛЬТРОВ
+   ===================== */
+
+.city-btn {
+  height: 38px;
+  border: 1px solid #d4b978;
+  border-radius: 6px;
+  padding: 0 14px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--text);
+}
+.city-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+.btn-find {
+  height: 38px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-find:hover { background: var(--blue-dark); }
+
+.btn-map-inline {
+  height: 38px;
+  background: #fff;
+  color: var(--text);
+  border: 1px solid #d4b978;
+  border-radius: 6px;
+  padding: 0 16px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-map-inline:hover { background: #fdf4d8; }
+
+.filter-row-checks { margin-bottom: 0; }
+
+/* =====================
+   МОДАЛЬНОЕ ОКНО ГОРОДА
+   ===================== */
+.city-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 2000;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+}
+.city-modal-overlay.open { display: flex; }
+.city-modal-panel {
+  background: #fff;
+  border-radius: 12px;
+  width: 660px;
+  max-width: 96vw;
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+  overflow: hidden;
+}
+.city-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+.city-modal-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.city-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  padding: 2px 6px;
+}
+.city-modal-close:hover { color: var(--text); }
+.city-modal-body { display: flex; flex: 1; overflow: hidden; }
+.city-modal-cities {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid #eee;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.city-modal-districts {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.city-option, .dist-option {
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+.city-option:hover, .dist-option:hover { background: var(--bg-secondary); }
+.city-option.active { color: var(--blue); font-weight: 700; background: #f0f7ff; }
+.dist-option.active { color: var(--blue); font-weight: 600; background: #f0f7ff; }
+.city-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+.city-modal-btn {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 32px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.city-modal-btn:hover { background: var(--blue-dark); }

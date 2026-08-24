@@ -457,7 +457,7 @@ async function update() {
   renderMarkers(items);          // на карте — только текущая страница
   renderPager(totalCount);
   document.getElementById("btnResults").textContent =
-    "Показать результаты (" + totalCount.toLocaleString("ru-RU").replace(/,/g, " ") + ")";
+    "Найти (" + totalCount.toLocaleString("ru-RU").replace(/,/g, " ") + ")";
 }
 
 /* ПАГИНАЦИЯ — кнопки Назад / Вперёд */
@@ -834,6 +834,74 @@ document.getElementById("btnSignIn").addEventListener("click", signIn);
 document.getElementById("btnSignUp").addEventListener("click", signUp);
 document.getElementById("authClose").addEventListener("click", closeAuth);
 document.getElementById("authOverlay").addEventListener("click", (e) => { if (e.target.id === "authOverlay") closeAuth(); });
+
+/* МОДАЛЬНОЕ ОКНО ВЫБОРА ГОРОДА */
+let modalCity = "Алматы";
+let modalDistrict = "";
+
+function renderCityModal() {
+  const cityList = document.getElementById("cityModalList");
+  const distList = document.getElementById("districtModalList");
+
+  cityList.innerHTML = Object.keys(CITIES).map(c =>
+    `<li class="city-option${c === modalCity ? " active" : ""}" data-city="${c}">${c}</li>`
+  ).join("");
+
+  cityList.querySelectorAll(".city-option").forEach(el => {
+    el.addEventListener("click", () => {
+      modalCity = el.dataset.city;
+      modalDistrict = "";
+      renderCityModal();
+    });
+  });
+
+  const districts = Object.keys(CITIES[modalCity].districts);
+  distList.innerHTML =
+    `<li class="dist-option${modalDistrict === "" ? " active" : ""}" data-dist="">Все районы</li>` +
+    districts.map(d =>
+      `<li class="dist-option${d === modalDistrict ? " active" : ""}" data-dist="${d}">${d}</li>`
+    ).join("");
+
+  distList.querySelectorAll(".dist-option").forEach(el => {
+    el.addEventListener("click", () => {
+      modalDistrict = el.dataset.dist;
+      distList.querySelectorAll(".dist-option").forEach(x => x.classList.remove("active"));
+      el.classList.add("active");
+    });
+  });
+}
+
+function openCityModal() {
+  modalCity = citySel.value || "Алматы";
+  modalDistrict = districtSel.value || "";
+  renderCityModal();
+  document.getElementById("cityModal").classList.add("open");
+}
+
+function closeCityModal() {
+  document.getElementById("cityModal").classList.remove("open");
+}
+
+document.getElementById("cityBtn").addEventListener("click", openCityModal);
+document.getElementById("cityModalClose").addEventListener("click", closeCityModal);
+document.getElementById("cityModal").addEventListener("click", e => {
+  if (e.target.id === "cityModal") closeCityModal();
+});
+
+document.getElementById("cityModalSelect").addEventListener("click", () => {
+  citySel.value = modalCity;
+  fillDistricts(districtSel, modalCity, true);
+  districtSel.value = modalDistrict;
+  fillComplexes(modalCity);
+  const c = CITIES[modalCity];
+  map.setView(c.center, c.zoom);
+  const label = modalDistrict ? `${modalCity}, ${modalDistrict} ▾` : `${modalCity} ▾`;
+  document.getElementById("cityBtn").textContent = label;
+  closeCityModal();
+  applyNow();
+});
+
+document.getElementById("btnMapInline").addEventListener("click", showMap);
 
 /* СТАРТ */
 async function start() {
