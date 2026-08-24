@@ -14,7 +14,7 @@
   .container { max-width: 1260px; margin: 0 auto; padding: 0 15px; width: 100%; }
   a { color: var(--blue); text-decoration: none; cursor: pointer; }
   header { background: #fff; border-bottom: 1px solid #e5e5e5; }
-  header .container { display: flex; align-items: center; gap: 28px; padding: 14px 0; }
+  header .container { display: flex; align-items: center; gap: 28px; padding: 14px 15px; }
   .logo { font-size: 26px; font-weight: 800; letter-spacing: -1px; cursor: pointer; }
   .logo span { color: var(--blue); }
   nav { display: flex; gap: 22px; font-size: 15px; }
@@ -24,7 +24,7 @@
   .btn-add { background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .btn-add:hover { filter: brightness(.92); }
   .filters { background: #fce9b8; border-bottom: 1px solid #e8d49a; }
-  .filters .container { padding: 14px 0; }
+  .filters .container { padding: 14px 15px; }
   .filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
   .filter-row:last-child { margin-bottom: 0; }
   .filter-row--hidden { display: none !important; }
