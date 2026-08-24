@@ -385,6 +385,18 @@
 
 .filter-row-checks { margin-bottom: 0; }
 
+#rentOnly { display: none; align-items: center; }
+#rentOnly select {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
 /* =====================
    МОДАЛЬНОЕ ОКНО ГОРОДА
    ===================== */

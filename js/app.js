@@ -661,8 +661,8 @@ function setDeal(d) {
   document.querySelectorAll("#deal button").forEach(b => b.classList.toggle("on", b.dataset.d === d));
   document.getElementById("navSale").classList.toggle("active", d === "sale");
   document.getElementById("navRent").classList.toggle("active", d === "rent");
-  // блок аренды (период + дети/животные) показываем только для аренды
   document.getElementById("rentOnly").style.display = d === "rent" ? "inline-flex" : "none";
+  document.querySelectorAll(".sale-only").forEach(el => el.style.display = d === "rent" ? "none" : "");
   document.getElementById("priceFrom").value = "";
   document.getElementById("priceTo").value = "";
   applyNow();

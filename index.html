@@ -45,8 +45,16 @@
     <div class="filter-row">
       <div class="deal" id="deal">
         <button data-d="sale" class="on">Купить</button>
-        <button data-d="rent">Снять</button>
+        <button data-d="rent">Арендовать</button>
       </div>
+      <span id="rentOnly" style="display:none">
+        <select id="rentPeriod">
+          <option value="any">Период</option>
+          <option value="month">Помесячно</option>
+          <option value="day">Посуточно</option>
+          <option value="hour">По часам</option>
+        </select>
+      </span>
       <div class="rooms" id="rooms">
         <button data-r="1">1</button>
         <button data-r="2">2</button>
@@ -69,9 +77,9 @@
     <!-- Строка 2: галочки -->
     <div class="filter-row filter-row-checks">
       <label class="check"><input type="checkbox" id="onlyPhoto"> есть фото</label>
-      <label class="check"><input type="checkbox" id="onlyNew"> новостройки</label>
+      <label class="check sale-only"><input type="checkbox" id="onlyNew"> новостройки</label>
       <label class="check"><input type="checkbox" id="onlyOwner"> от хозяев</label>
-      <label class="check"><input type="checkbox" id="onlyAgency"> От Крыша Агентов</label>
+      <label class="check sale-only"><input type="checkbox" id="onlyAgency"> От Крыша Агентов</label>
     </div>
 
     <!-- Скрытые элементы: не видны, но нужны app.js -->
@@ -80,16 +88,8 @@
       <button id="viewList" class="on">Списком</button>
       <button id="viewMap">На карте</button>
       <button id="btnClear">Очистить всё</button>
-      <span id="rentOnly">
-        <select id="rentPeriod">
-          <option value="any">любой</option>
-          <option value="month">помесячно</option>
-          <option value="day">посуточно</option>
-          <option value="hour">по часам</option>
-        </select>
-        <input type="checkbox" id="fKids">
-        <input type="checkbox" id="fPets">
-      </span>
+      <input type="checkbox" id="fKids">
+      <input type="checkbox" id="fPets">
       <input type="number" id="areaFrom">
       <input type="number" id="areaTo">
       <input type="number" id="floorFrom">
