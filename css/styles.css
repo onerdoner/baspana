@@ -25,9 +25,9 @@
   .btn-add:hover { filter: brightness(.92); }
   .filters { background: #fce9b8; border-bottom: 1px solid #e8d49a; }
   .filters .container { padding: 14px 0; }
-  .filter-row--hidden { display: none; }
   .filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
   .filter-row:last-child { margin-bottom: 0; }
+  .filter-row--hidden { display: none !important; }
   .flabel { font-size: 13px; color: var(--text-muted); }
   .deal { display: flex; border: 1px solid #d4b978; border-radius: 6px; overflow: hidden; }
   .deal button { background: var(--bg); border: none; padding: 9px 20px; cursor: pointer; font-size: 13px; color: var(--text); }
