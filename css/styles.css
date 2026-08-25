@@ -570,8 +570,19 @@
 }
 
 /* Ещё настройки */
-.filter-more { border-top: 1px solid #e2d49a; margin-top: 4px; padding: 10px 0 6px; }
-.filter-more-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
+.filter-more { border-top: 1px solid #e2d49a; margin-top: 4px; padding: 10px 0 8px; }
+.filter-more-grid { padding-bottom: 6px; }
+.fg-text-row { padding-top: 8px; border-top: 1px solid #e8d49a; margin-top: 4px; }
+.fg-text-search-wide {
+  flex: 1;
+  height: 26px;
+  font-size: 12px;
+  padding: 0 8px;
+  border: 1px solid #c9b87a;
+  border-radius: 4px;
+  background: #fff;
+  min-width: 0;
+}
 
 /* Строка кнопок действий */
 .filter-actions-row {

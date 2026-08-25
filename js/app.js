@@ -543,7 +543,7 @@ function showHomeView() {
   document.getElementById("filterZoneLight").style.display = "none";
   // Сбрасываем «Ещё настройки»
   document.getElementById("filterMore").style.display = "none";
-  document.getElementById("btnMoreSettings").textContent = "⊞ Ещё настройки";
+  document.getElementById("btnMoreSettings").textContent = "⊞ Ещё настройки ▾";
   // Показываем витрину
   document.getElementById("hotSection").style.display = "";
   document.getElementById("searchContent").style.display = "none";
@@ -1088,7 +1088,7 @@ document.getElementById("btnMoreSettings").addEventListener("click", () => {
   const btn = document.getElementById("btnMoreSettings");
   const visible = more.style.display !== "none";
   more.style.display = visible ? "none" : "";
-  btn.textContent = visible ? "⊞ Ещё настройки" : "⊟ Меньше настроек";
+  btn.textContent = visible ? "⊞ Ещё настройки ▾" : "⊟ Скрыть настройки ▲";
 });
 document.getElementById("viewList").addEventListener("click", showList);
 document.getElementById("viewMap").addEventListener("click", showMap);
