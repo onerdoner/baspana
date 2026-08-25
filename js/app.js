@@ -107,7 +107,7 @@ async function signIn() {
   const { error } = await db.auth.signInWithPassword({ email, password: pass });
   if (error) { msg.className = "form-msg err"; msg.textContent = "Не удалось войти: " + error.message; return; }
   msg.className = "form-msg ok"; msg.textContent = "Вход выполнен.";
-  await refreshAuth(); applyNow();
+  await refreshAuth(); if (currentView === "search") applyNow();
   setTimeout(closeAuth, 700);
 }
 async function signUp() {
@@ -120,7 +120,7 @@ async function signUp() {
   if (error) { msg.className = "form-msg err"; msg.textContent = "Ошибка регистрации: " + error.message; return; }
   if (data.session) {
     msg.className = "form-msg ok"; msg.textContent = "Аккаунт создан, вы вошли.";
-    await refreshAuth(); applyNow();
+    await refreshAuth(); if (currentView === "search") applyNow();
     setTimeout(closeAuth, 700);
   } else {
     msg.className = "form-msg ok";
@@ -133,7 +133,7 @@ async function logout() {
   favMode = false;
   document.getElementById("navFav").classList.remove("active");
   await loadFavorites();
-  applyNow();
+  if (currentView === "search") applyNow();
 }
 
 /* 1. ЧТЕНИЕ ИЗ БАЗЫ — теперь постранично и с фильтрами на стороне базы.
@@ -157,7 +157,9 @@ function rowToItem(row) {
     rentPeriod: row.rent_period || "month", furnished: row.furnished,
     pets: row.pets_allowed, kids: row.kids_allowed,
     imageUrl: row.image_url, images: row.images || [], city: row.city || "Алматы",
-    complex: row.complex,
+    complex: row.complex, kitchenArea: row.kitchen_area, bathroom: row.bathroom,
+    sellerType: row.seller_type, pledged: row.pledged,
+    exDormitory: row.ex_dormitory, exchange: row.exchange,
     date: "18 августа", views: Math.floor(Math.random() * 300),
   };
 }
@@ -186,9 +188,20 @@ function buildQuery(query) {
   if (f.areaTo !== Infinity) query = query.lte("area", f.areaTo);
   if (f.floorFrom) query = query.gte("floor", f.floorFrom);
   if (f.floorTo !== Infinity) query = query.lte("floor", f.floorTo);
+  if (f.floorsFrom) query = query.gte("floors_total", f.floorsFrom);
+  if (f.floorsTo !== Infinity) query = query.lte("floors_total", f.floorsTo);
+  if (f.kitchenFrom) query = query.gte("kitchen_area", f.kitchenFrom);
+  if (f.kitchenTo !== Infinity) query = query.lte("kitchen_area", f.kitchenTo);
+  if (f.yearFrom) query = query.gte("year_built", f.yearFrom);
+  if (f.yearTo !== Infinity) query = query.lte("year_built", f.yearTo);
+  if (f.houseType) query = query.eq("house_type", f.houseType);
+  if (f.bathroom) query = query.eq("bathroom", f.bathroom);
   if (f.onlyPhoto) query = query.eq("has_photo", true);
   if (f.onlyNew) query = query.eq("is_new", true);
   if (f.onlyMine && currentUser) query = query.eq("user_id", currentUser.id);
+  // seller_type: если выбрана только одна галочка — фильтруем; обе/ни одной — не фильтруем
+  if (f.onlyOwner && !f.onlyAgency) query = query.eq("seller_type", "owner");
+  if (f.onlyAgency && !f.onlyOwner) query = query.eq("seller_type", "agent");
   if (f.deal === "rent" && f.rentPeriod !== "any") query = query.eq("rent_period", f.rentPeriod);
   if (f.furnished === "yes") query = query.eq("furnished", true);
   if (f.furnished === "no") query = query.eq("furnished", false);
@@ -196,6 +209,11 @@ function buildQuery(query) {
   if (f.kids) query = query.eq("kids_allowed", true);
   if (f.noFirst) query = query.neq("floor", 1);
   if (f.noLast) query = query.eq("is_top_floor", false);
+  if (f.pledged === "yes") query = query.eq("pledged", true);
+  if (f.pledged === "no") query = query.eq("pledged", false);
+  if (f.exDormitory === "yes") query = query.eq("ex_dormitory", true);
+  if (f.exDormitory === "no") query = query.eq("ex_dormitory", false);
+  if (f.exchange) query = query.eq("exchange", true);
   if (f.text) {
     const t = f.text.replace(/[(),%]/g, " ").trim();  // убираем спецсимволы
     if (t) query = query.or(`description.ilike.%${t}%,street.ilike.%${t}%,district.ilike.%${t}%`);
@@ -271,9 +289,8 @@ async function submitListing() {
   btn.disabled = false;
   if (error) { msg.className = "form-msg err"; msg.textContent = "Ошибка: " + error.message; return; }
   msg.className = "form-msg ok"; msg.textContent = "Готово! Объявление добавлено.";
-  showList();
-  setDeal(dealType);   // setDeal сам сбросит на 1-ю страницу и обновит список
-  setTimeout(closeForm, 900);
+  setDeal(dealType);
+  setTimeout(() => { closeForm(); navigateToSearch(false); }, 900);
 }
 
 /* 3. УДАЛЕНИЕ */
@@ -307,6 +324,7 @@ function shortPrice(item) {
 /* ФИЛЬТРАЦИЯ */
 let activeRooms = [];
 let activeDeal = "sale";
+let currentView = "home"; // "home" | "search"
 function getFilters() {
   return {
     deal: activeDeal, rooms: activeRooms,
@@ -319,8 +337,18 @@ function getFilters() {
     areaTo: +document.getElementById("areaTo").value || Infinity,
     floorFrom: +document.getElementById("floorFrom").value || 0,
     floorTo: +document.getElementById("floorTo").value || Infinity,
+    floorsFrom: +document.getElementById("floorsFrom").value || 0,
+    floorsTo: +document.getElementById("floorsTo").value || Infinity,
+    kitchenFrom: +document.getElementById("kitchenFrom").value || 0,
+    kitchenTo: +document.getElementById("kitchenTo").value || Infinity,
+    yearFrom: +document.getElementById("yearFrom").value || 0,
+    yearTo: +document.getElementById("yearTo").value || Infinity,
+    houseType: document.getElementById("houseType").value,
+    bathroom: document.getElementById("bathroom").value,
     onlyPhoto: document.getElementById("onlyPhoto").checked,
     onlyNew: document.getElementById("onlyNew").checked,
+    onlyOwner: document.getElementById("onlyOwner").checked,
+    onlyAgency: document.getElementById("onlyAgency").checked,
     onlyMine: document.getElementById("onlyMine").checked,
     rentPeriod: document.getElementById("rentPeriod").value,
     furnished: document.getElementById("furnished").value,
@@ -328,6 +356,9 @@ function getFilters() {
     kids: document.getElementById("fKids").checked,
     noFirst: document.getElementById("noFirst").checked,
     noLast: document.getElementById("noLast").checked,
+    pledged: document.getElementById("pledged").value,
+    exDormitory: document.getElementById("exDormitory").value,
+    exchange: document.getElementById("exchange").checked,
     text: document.getElementById("textSearch").value.trim().toLowerCase(),
   };
 }
@@ -456,8 +487,9 @@ async function update() {
   renderList(items, totalCount);
   renderMarkers(items);          // на карте — только текущая страница
   renderPager(totalCount);
-  document.getElementById("btnResults").textContent =
-    "Найти (" + totalCount.toLocaleString("ru-RU").replace(/,/g, " ") + ")";
+  const applyBtn = document.getElementById("btnApply");
+  if (applyBtn) applyBtn.textContent =
+    "Показать результаты (" + totalCount.toLocaleString("ru-RU").replace(/,/g, " ") + ")";
 }
 
 /* ПАГИНАЦИЯ — кнопки Назад / Вперёд */
@@ -487,6 +519,245 @@ function scheduleUpdate() {
 function applyNow() { currentPage = 1; update(); }
 
 /* =========================================================
+   ДВУХСТРАНИЧНАЯ НАВИГАЦИЯ
+   ========================================================= */
+function showHomeView() {
+  currentView = "home";
+  // Переключатель Купить/Арендовать — виден только на главной
+  document.getElementById("deal").style.display = "";
+  // Скрываем поисковые метки
+  document.querySelectorAll(".fls-prefix,.fls-suffix,.fls-tg").forEach(el => el.style.display = "none");
+  // Восстанавливаем подпись цены
+  document.getElementById("priceLabel").textContent = "Цена, ₸";
+  // Показываем Найти / На карте
+  document.getElementById("btnResults").style.display = "";
+  document.getElementById("btnMapInline").style.display = "";
+  // Убираем search-класс с первой строки
+  document.getElementById("filterRow1").classList.remove("filter-row-search");
+  // Возвращаем галочки обратно в тёмную зону как отдельную строку
+  const darkZone = document.querySelector(".filter-dark-zone");
+  const checks = document.getElementById("filterRowChecks");
+  darkZone.appendChild(checks);
+  checks.style.display = "";
+  // Скрываем светлую зону
+  document.getElementById("filterZoneLight").style.display = "none";
+  // Сбрасываем «Ещё настройки»
+  document.getElementById("filterMore").style.display = "none";
+  document.getElementById("btnMoreSettings").textContent = "⊞ Ещё настройки";
+  // Показываем витрину
+  document.getElementById("hotSection").style.display = "";
+  document.getElementById("searchContent").style.display = "none";
+  history.pushState({ view: "home" }, "", location.pathname);
+  loadHotOffers();
+}
+
+function showSearchView(mapMode) {
+  currentView = "search";
+  // Скрываем переключатель Купить/Арендовать
+  document.getElementById("deal").style.display = "none";
+  // Показываем поисковые метки
+  document.querySelectorAll(".fls-prefix,.fls-suffix,.fls-tg").forEach(el => el.style.display = "");
+  // Меняем подпись цены
+  document.getElementById("priceLabel").textContent = "Цена";
+  // Скрываем Найти / На карте
+  document.getElementById("btnResults").style.display = "none";
+  document.getElementById("btnMapInline").style.display = "none";
+  // Добавляем search-класс первой строке (разрешает перенос галочек)
+  document.getElementById("filterRow1").classList.add("filter-row-search");
+  // Встраиваем галочки в конец строки 1 через display:contents
+  const row1 = document.getElementById("filterRow1");
+  const checks = document.getElementById("filterRowChecks");
+  row1.appendChild(checks);
+  checks.style.display = "contents";
+  // Показываем светлую зону
+  document.getElementById("filterZoneLight").style.display = "";
+  // Показываем результаты поиска
+  document.getElementById("hotSection").style.display = "none";
+  document.getElementById("searchContent").style.display = "flex";
+  if (mapMode) showMap(); else showList();
+  applyNow();
+}
+
+function navigateToSearch(mapMode) {
+  const p = serializeFilters();
+  if (mapMode) p.set("map", "1");
+  history.pushState({ view: "search" }, "", "?" + p.toString());
+  showSearchView(mapMode);
+}
+
+function serializeFilters() {
+  const p = new URLSearchParams();
+  p.set("view", "search");
+  p.set("deal", activeDeal);
+  const city = document.getElementById("city").value;
+  if (city) p.set("city", city);
+  const district = document.getElementById("district").value;
+  if (district) p.set("district", district);
+  if (activeRooms.length) p.set("rooms", activeRooms.join(","));
+  const pf = document.getElementById("priceFrom").value;
+  const pt = document.getElementById("priceTo").value;
+  if (pf) p.set("pf", pf);
+  if (pt) p.set("pt", pt);
+  const af = document.getElementById("areaFrom").value;
+  const at = document.getElementById("areaTo").value;
+  if (af) p.set("af", af);
+  if (at) p.set("at", at);
+  const ff = document.getElementById("floorFrom").value;
+  const ft = document.getElementById("floorTo").value;
+  if (ff) p.set("ff", ff);
+  if (ft) p.set("ft", ft);
+  const complex = document.getElementById("complex").value;
+  if (complex) p.set("complex", complex);
+  const ht = document.getElementById("houseType").value;
+  if (ht) p.set("ht", ht);
+  const bath = document.getElementById("bathroom").value;
+  if (bath) p.set("bath", bath);
+  const yf = document.getElementById("yearFrom").value;
+  const yt = document.getElementById("yearTo").value;
+  if (yf) p.set("yf", yf);
+  if (yt) p.set("yt", yt);
+  const flsf = document.getElementById("floorsFrom").value;
+  const flst = document.getElementById("floorsTo").value;
+  if (flsf) p.set("flsf", flsf);
+  if (flst) p.set("flst", flst);
+  const kf = document.getElementById("kitchenFrom").value;
+  const kt = document.getElementById("kitchenTo").value;
+  if (kf) p.set("kf", kf);
+  if (kt) p.set("kt", kt);
+  if (document.getElementById("onlyPhoto").checked) p.set("photo", "1");
+  if (document.getElementById("onlyNew").checked) p.set("new", "1");
+  if (document.getElementById("onlyOwner").checked) p.set("owner", "1");
+  if (document.getElementById("onlyAgency").checked) p.set("agency", "1");
+  const rp = document.getElementById("rentPeriod").value;
+  if (rp && rp !== "any") p.set("rp", rp);
+  const furn = document.getElementById("furnished").value;
+  if (furn && furn !== "any") p.set("furn", furn);
+  if (document.getElementById("fKids").checked) p.set("kids", "1");
+  if (document.getElementById("fPets").checked) p.set("pets", "1");
+  if (document.getElementById("noFirst").checked) p.set("nof", "1");
+  if (document.getElementById("noLast").checked) p.set("nol", "1");
+  const pledged = document.getElementById("pledged").value;
+  if (pledged) p.set("pledged", pledged);
+  const exDorm = document.getElementById("exDormitory").value;
+  if (exDorm) p.set("exdorm", exDorm);
+  if (document.getElementById("exchange").checked) p.set("exchange", "1");
+  const txt = document.getElementById("textSearch").value.trim();
+  if (txt) p.set("q", txt);
+  return p;
+}
+
+function deserializeFilters(p) {
+  const deal = p.get("deal") || "sale";
+  activeDeal = deal;
+  document.querySelectorAll("#deal button").forEach(b => b.classList.toggle("on", b.dataset.d === deal));
+  document.getElementById("navSale").classList.toggle("active", deal === "sale");
+  document.getElementById("navRent").classList.toggle("active", deal === "rent");
+  document.getElementById("rentOnly").style.display = deal === "rent" ? "inline-flex" : "none";
+  document.querySelectorAll(".sale-only").forEach(el => el.style.display = deal === "rent" ? "none" : "");
+
+  const city = p.get("city") || "Алматы";
+  document.getElementById("city").value = city;
+  fillDistricts(document.getElementById("district"), city, true);
+  fillComplexes(city);
+  const district = p.get("district") || "";
+  document.getElementById("district").value = district;
+  const label = district ? `${city}, ${district} ▾` : `${city} ▾`;
+  document.getElementById("cityBtn").textContent = label;
+
+  activeRooms = (p.get("rooms") || "").split(",").filter(Boolean).map(Number);
+  document.querySelectorAll("#rooms button").forEach(b => {
+    b.classList.toggle("on", activeRooms.includes(+b.dataset.r));
+  });
+
+  document.getElementById("priceFrom").value = p.get("pf") || "";
+  document.getElementById("priceTo").value = p.get("pt") || "";
+  document.getElementById("areaFrom").value = p.get("af") || "";
+  document.getElementById("areaTo").value = p.get("at") || "";
+  document.getElementById("floorFrom").value = p.get("ff") || "";
+  document.getElementById("floorTo").value = p.get("ft") || "";
+  document.getElementById("floorsFrom").value = p.get("flsf") || "";
+  document.getElementById("floorsTo").value = p.get("flst") || "";
+  document.getElementById("kitchenFrom").value = p.get("kf") || "";
+  document.getElementById("kitchenTo").value = p.get("kt") || "";
+  document.getElementById("yearFrom").value = p.get("yf") || "";
+  document.getElementById("yearTo").value = p.get("yt") || "";
+  document.getElementById("houseType").value = p.get("ht") || "";
+  document.getElementById("bathroom").value = p.get("bath") || "";
+  document.getElementById("complex").value = p.get("complex") || "";
+  document.getElementById("onlyPhoto").checked = p.get("photo") === "1";
+  document.getElementById("onlyNew").checked = p.get("new") === "1";
+  document.getElementById("onlyOwner").checked = p.get("owner") === "1";
+  document.getElementById("onlyAgency").checked = p.get("agency") === "1";
+  document.getElementById("rentPeriod").value = p.get("rp") || "any";
+  document.getElementById("furnished").value = p.get("furn") || "any";
+  document.getElementById("fKids").checked = p.get("kids") === "1";
+  document.getElementById("fPets").checked = p.get("pets") === "1";
+  document.getElementById("noFirst").checked = p.get("nof") === "1";
+  document.getElementById("noLast").checked = p.get("nol") === "1";
+  document.getElementById("pledged").value = p.get("pledged") || "";
+  document.getElementById("exDormitory").value = p.get("exdorm") || "";
+  document.getElementById("exchange").checked = p.get("exchange") === "1";
+  document.getElementById("textSearch").value = p.get("q") || "";
+}
+
+async function loadHotOffers() {
+  if (!initDb()) return;
+  const grid = document.getElementById("hotGrid");
+  grid.innerHTML = Array(6).fill(`
+    <div class="card skeleton">
+      <div class="skeleton-photo" style="width:100%;height:170px;border-radius:12px 12px 0 0"></div>
+      <div class="skeleton-info" style="padding:10px 12px">
+        <div class="skeleton-line w70"></div>
+        <div class="skeleton-line w50"></div>
+        <div class="skeleton-line w40"></div>
+      </div>
+    </div>`).join("");
+  const { data } = await db.from("listings")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(12);
+  if (!data || !data.length) {
+    grid.innerHTML = '<div class="empty">Нет объявлений</div>';
+    return;
+  }
+  const items = data.map(rowToItem);
+  grid.innerHTML = items.map(item => {
+    const imgs = (item.images && item.images.length) ? item.images : (item.imageUrl ? [item.imageUrl] : []);
+    const photo = imgs.length
+      ? `<div class="photo" style="background-image:url('${imgs[0]}');background-size:cover;background-position:center">${imgs.length > 1 ? `<span class="photo-count">${imgs.length} фото</span>` : ""}</div>`
+      : `<div class="photo" style="background:${item.color}"><span class="card-room-label">${item.rooms}-комн.</span></div>`;
+    return `
+    <div class="card" data-id="${item.id}">
+      <span class="fav ${favoriteIds.has(item.id) ? "on" : ""}" data-fav="${item.id}">♥</span>
+      ${photo}
+      <div class="info">
+        <div class="price">${priceLabel(item)}</div>
+        <div class="title">${item.rooms}-комн. квартира · ${item.area} м² · ${item.floor}/${item.floorsTotal} этаж</div>
+        <div class="addr">${item.district} р-н, ул. ${item.street}</div>
+        <div class="meta">
+          <span>${item.date}</span>
+          ${item.isNew ? "<span class='card-new'>новостройка</span>" : ""}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  grid.querySelectorAll(".card").forEach(el => {
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("[data-fav]")) return;
+      const item = items.find(x => x.id === +el.dataset.id);
+      if (item) openDetail(item);
+    });
+  });
+  grid.querySelectorAll("[data-fav]").forEach(el => {
+    el.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const state = await toggleFavorite(+el.dataset.fav);
+      if (state !== null) el.classList.toggle("on", state);
+    });
+  });
+}
+
+/* =========================================================
    СТРАНИЦА ОБЪЯВЛЕНИЯ
    Открывается при клике на карточку или точку на карте.
    ========================================================= */
@@ -510,7 +781,9 @@ function openDetail(item) {
     <div class="attr"><span class="k">Год постройки</span><span class="v">${item.yearBuilt || "—"}</span></div>
     <div class="attr"><span class="k">Этаж</span><span class="v">${item.floor} из ${item.floorsTotal}</span></div>
     <div class="attr"><span class="k">Площадь</span><span class="v">${item.area} м²</span></div>
+    ${item.kitchenArea ? `<div class="attr"><span class="k">Площадь кухни</span><span class="v">${item.kitchenArea} м²</span></div>` : ""}
     <div class="attr"><span class="k">Состояние</span><span class="v">${item.condition || "—"}</span></div>
+    ${item.bathroom ? `<div class="attr"><span class="k">Санузел</span><span class="v">${item.bathroom}</span></div>` : ""}
     <div class="attr"><span class="k">Цена за м²</span><span class="v">${perM2} ₸</span></div>
     <div class="attr"><span class="k">Меблирована</span><span class="v">${item.furnished ? "да" : "нет"}</span></div>
     ${item.dealType === "rent" ? `
@@ -566,7 +839,7 @@ function openDetail(item) {
 
   document.getElementById("detail").classList.add("open");
   window.scrollTo(0, 0);
-  history.pushState({ listingId: item.id }, '', '#' + item.id);
+  history.pushState({ listingId: item.id }, '', location.search + '#' + item.id);
 
   // мини-карта объявления (создаём один раз, потом переиспользуем)
   setTimeout(() => {
@@ -665,7 +938,6 @@ function setDeal(d) {
   document.querySelectorAll(".sale-only").forEach(el => el.style.display = d === "rent" ? "none" : "");
   document.getElementById("priceFrom").value = "";
   document.getElementById("priceTo").value = "";
-  applyNow();
 }
 
 /* ОКНА */
@@ -732,10 +1004,16 @@ document.getElementById("navFav").addEventListener("click", () => {
   document.getElementById("navFav").classList.toggle("active", favMode);
   document.getElementById("navSale").classList.toggle("active", !favMode && activeDeal === "sale");
   document.getElementById("navRent").classList.toggle("active", !favMode && activeDeal === "rent");
-  showList();
-  applyNow();
+  if (currentView === "search") { showList(); applyNow(); }
+  else navigateToSearch(false);
 });
-document.getElementById("logo").addEventListener("click", closeDetail);
+document.getElementById("logo").addEventListener("click", () => {
+  if (document.getElementById("detail").classList.contains("open")) {
+    closeDetail();
+  } else if (currentView === "search") {
+    showHomeView();
+  }
+});
 document.getElementById("detailBack").addEventListener("click", closeDetail);
 
 document.querySelectorAll("#sortBar button").forEach(btn => {
@@ -752,7 +1030,6 @@ document.querySelectorAll("#rooms button").forEach(btn => {
     btn.classList.toggle("on");
     if (activeRooms.includes(r)) activeRooms = activeRooms.filter(x => x !== r);
     else activeRooms.push(r);
-    applyNow();
   });
 });
 
@@ -790,8 +1067,7 @@ citySel.addEventListener("change", () => {
   fillDistricts(districtSel, citySel.value, true);
   fillComplexes(citySel.value);
   const c = CITIES[citySel.value];
-  map.setView(c.center, c.zoom);         // карта переезжает в выбранный город
-  applyNow();
+  map.setView(c.center, c.zoom);
 });
 
 // селект города в форме
@@ -805,25 +1081,29 @@ cityForm.addEventListener("change", () => {
   fillComplexes(cityForm.value);
 });
 
-["district","priceFrom","priceTo","areaFrom","areaTo","floorFrom","floorTo","onlyPhoto","onlyNew","onlyMine",
- "rentPeriod","furnished","fPets","fKids","noFirst","noLast","textSearch","complex"]
-  .forEach(id => document.getElementById(id).addEventListener("input", scheduleUpdate));
-
-document.getElementById("btnResults").addEventListener("click", () => { showList(); applyNow(); });
+document.getElementById("btnResults").addEventListener("click", () => navigateToSearch(false));
+document.getElementById("btnApply").addEventListener("click", () => { currentPage = 1; update(); });
+document.getElementById("btnMoreSettings").addEventListener("click", () => {
+  const more = document.getElementById("filterMore");
+  const btn = document.getElementById("btnMoreSettings");
+  const visible = more.style.display !== "none";
+  more.style.display = visible ? "none" : "";
+  btn.textContent = visible ? "⊞ Ещё настройки" : "⊟ Меньше настроек";
+});
 document.getElementById("viewList").addEventListener("click", showList);
 document.getElementById("viewMap").addEventListener("click", showMap);
 document.getElementById("btnClear").addEventListener("click", () => {
   activeRooms = [];
   document.querySelectorAll("#rooms button").forEach(b => b.classList.remove("on"));
-  ["district","priceFrom","priceTo","areaFrom","areaTo","floorFrom","floorTo"].forEach(id => document.getElementById(id).value = "");
-  document.getElementById("onlyPhoto").checked = false;
-  document.getElementById("onlyNew").checked = false;
-  document.getElementById("onlyMine").checked = false;
+  ["district","priceFrom","priceTo","areaFrom","areaTo","floorFrom","floorTo",
+   "floorsFrom","floorsTo","kitchenFrom","kitchenTo","yearFrom","yearTo"].forEach(id => document.getElementById(id).value = "");
+  ["houseType","bathroom","complex"].forEach(id => document.getElementById(id).value = "");
+  ["onlyPhoto","onlyNew","onlyOwner","onlyAgency","onlyMine","fPets","fKids","noFirst","noLast","exchange"].forEach(id => document.getElementById(id).checked = false);
   document.getElementById("rentPeriod").value = "any";
   document.getElementById("furnished").value = "any";
-  ["fPets","fKids","noFirst","noLast"].forEach(id => document.getElementById(id).checked = false);
+  document.getElementById("pledged").value = "";
+  document.getElementById("exDormitory").value = "";
   document.getElementById("textSearch").value = "";
-  document.getElementById("complex").value = "";
   applyNow();
 });
 
@@ -898,27 +1178,38 @@ document.getElementById("cityModalSelect").addEventListener("click", () => {
   const label = modalDistrict ? `${modalCity}, ${modalDistrict} ▾` : `${modalCity} ▾`;
   document.getElementById("cityBtn").textContent = label;
   closeCityModal();
-  applyNow();
 });
 
-document.getElementById("btnMapInline").addEventListener("click", showMap);
+document.getElementById("btnMapInline").addEventListener("click", () => navigateToSearch(true));
 
 /* СТАРТ */
 async function start() {
   await refreshAuth();
-  applyNow();
-  // Если в URL есть #12345 — открываем это объявление (работает для расшаренных ссылок)
-  const id = parseInt(location.hash.slice(1));
-  if (id) await loadAndOpenListing(id);
+  const p = new URLSearchParams(location.search);
+  if (p.get("view") === "search") {
+    deserializeFilters(p);
+    showSearchView(p.get("map") === "1");
+    const id = parseInt(location.hash.slice(1));
+    if (id) await loadAndOpenListing(id);
+  } else {
+    showHomeView();
+    const id = parseInt(location.hash.slice(1));
+    if (id) await loadAndOpenListing(id);
+  }
 }
 start();
 
-// Кнопка «Назад» в браузере: закрываем объявление или открываем нужное
-window.addEventListener('popstate', () => {
-  const id = parseInt(location.hash.slice(1));
-  if (id) {
-    loadAndOpenListing(id);
+window.addEventListener("popstate", () => {
+  const p = new URLSearchParams(location.search);
+  if (p.get("view") === "search") {
+    deserializeFilters(p);
+    showSearchView(p.get("map") === "1");
+    const id = parseInt(location.hash.slice(1));
+    if (id) loadAndOpenListing(id);
   } else {
-    document.getElementById("detail").classList.remove("open");
+    showHomeView();
+    const id = parseInt(location.hash.slice(1));
+    if (id) loadAndOpenListing(id);
+    else document.getElementById("detail").classList.remove("open");
   }
 });

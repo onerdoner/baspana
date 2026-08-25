@@ -41,68 +41,203 @@
 <div class="filters">
   <div class="container">
 
-    <!-- Строка 1: тип сделки, комнаты, город, цена, кнопки -->
-    <div class="filter-row">
-      <div class="deal" id="deal">
-        <button data-d="sale" class="on">Купить</button>
-        <button data-d="rent">Арендовать</button>
-      </div>
-      <div class="rooms" id="rooms">
-        <button data-r="1">1</button>
-        <button data-r="2">2</button>
-        <button data-r="3">3</button>
-        <button data-r="4">4</button>
-        <button data-r="5">5+</button>
-      </div>
-      <!-- Скрытые селекты — app.js читает их значения для фильтрации -->
-      <select id="city" hidden></select>
-      <select id="district" hidden><option value="">Все районы</option></select>
-      <button class="city-btn" id="cityBtn">Алматы ▾</button>
-      <span id="rentOnly" style="display:none">
-        <select id="rentPeriod">
-          <option value="any">Период</option>
-          <option value="month">Помесячно</option>
-          <option value="day">Посуточно</option>
-          <option value="hour">По часам</option>
-        </select>
-      </span>
-      <span class="flabel">Цена, ₸</span>
-      <input type="number" id="priceFrom" placeholder="от">
-      <span class="dash">—</span>
-      <input type="number" id="priceTo" placeholder="до">
-      <button class="btn-find" id="btnResults">Найти</button>
-      <button class="btn-map-inline" id="btnMapInline">На карте</button>
-    </div>
+    <!-- ТЁМНАЯ ЗОНА: строка 1 + галочки (виды: главная и поиск) -->
+    <div class="filter-dark-zone">
 
-    <!-- Строка 2: галочки -->
-    <div class="filter-row filter-row-checks">
-      <label class="check"><input type="checkbox" id="onlyPhoto"> есть фото</label>
-      <label class="check sale-only"><input type="checkbox" id="onlyNew"> новостройки</label>
-      <label class="check"><input type="checkbox" id="onlyOwner"> от хозяев</label>
-      <label class="check sale-only"><input type="checkbox" id="onlyAgency"> От Крыша Агентов</label>
-    </div>
+      <div class="filter-row" id="filterRow1">
+        <!-- Только поиск: тип объекта -->
+        <span class="fls-prefix" style="display:none">Квартиры</span>
+        <!-- Только главная: переключатель Купить/Арендовать -->
+        <div class="deal" id="deal">
+          <button data-d="sale" class="on">Купить</button>
+          <button data-d="rent">Арендовать</button>
+        </div>
+        <!-- Всегда: комнаты -->
+        <div class="rooms" id="rooms">
+          <button data-r="1">1</button>
+          <button data-r="2">2</button>
+          <button data-r="3">3</button>
+          <button data-r="4">4</button>
+          <button data-r="5">5+</button>
+        </div>
+        <!-- Только поиск: суффикс "- комн." -->
+        <span class="fls-suffix" style="display:none">- комн.</span>
+        <!-- Скрытые селекты (нужны app.js) -->
+        <select id="city" hidden></select>
+        <select id="district" hidden><option value="">Все районы</option></select>
+        <!-- Всегда: кнопка города -->
+        <button class="city-btn" id="cityBtn">Алматы ▾</button>
+        <!-- Только аренда: период -->
+        <span id="rentOnly" style="display:none">
+          <select id="rentPeriod">
+            <option value="any">Период</option>
+            <option value="month">Помесячно</option>
+            <option value="day">Посуточно</option>
+            <option value="hour">По часам</option>
+          </select>
+        </span>
+        <!-- Подпись цены (меняется по виду) -->
+        <span class="flabel" id="priceLabel">Цена, ₸</span>
+        <input type="number" id="priceFrom" placeholder="от">
+        <span class="dash">—</span>
+        <input type="number" id="priceTo" placeholder="до">
+        <!-- Только поиск: "тг" после цены -->
+        <span class="fls-tg" style="display:none">тг</span>
+        <!-- Только главная: Найти, На карте -->
+        <button class="btn-find" id="btnResults">Найти</button>
+        <button class="btn-map-inline" id="btnMapInline">На карте</button>
+      </div>
 
-    <!-- Скрытые элементы: не видны, но нужны app.js -->
+      <!-- Галочки: на главной — отдельная строка; на поиске — встраиваются в строку 1 через display:contents -->
+      <div class="filter-row filter-row-checks" id="filterRowChecks">
+        <label class="check"><input type="checkbox" id="onlyPhoto"> есть фото</label>
+        <label class="check sale-only"><input type="checkbox" id="onlyNew"> новостройки</label>
+        <label class="check"><input type="checkbox" id="onlyOwner"> от хозяев</label>
+        <label class="check sale-only"><input type="checkbox" id="onlyAgency"> От Крыша Агентов</label>
+      </div>
+
+    </div><!-- /filter-dark-zone -->
+
+    <!-- СВЕТЛАЯ ЗОНА: расширенные фильтры + действия (только поиск) -->
+    <div class="filter-zone-light" id="filterZoneLight" style="display:none">
+
+      <!-- 3-колоночная сетка расширенных фильтров -->
+      <div class="filter-grid-3col" id="filterExtended">
+
+        <!-- Колонка 1: Тип дома, Год постройки, ЖК, Санузел -->
+        <div class="fg-col">
+          <div class="fg-row">
+            <span class="fg-label">Тип дома</span>
+            <select id="houseType" class="fg-select">
+              <option value="">не важно</option>
+              <option value="монолитный">Монолитный</option>
+              <option value="панельный">Панельный</option>
+              <option value="кирпичный">Кирпичный</option>
+              <option value="иной">Иной</option>
+            </select>
+          </div>
+          <div class="fg-row">
+            <span class="fg-label">Год постройки</span>
+            <div class="fg-range">
+              <input type="number" id="yearFrom" class="fg-input" placeholder="от">
+              <span class="dash">—</span>
+              <input type="number" id="yearTo" class="fg-input" placeholder="до">
+            </div>
+          </div>
+          <div class="fg-row">
+            <span class="fg-label">Жилой комплекс</span>
+            <select id="complex" class="fg-select"><option value="">Любой ЖК</option></select>
+          </div>
+          <div class="fg-row">
+            <span class="fg-label">Санузел</span>
+            <select id="bathroom" class="fg-select">
+              <option value="">не важно</option>
+              <option value="совмещённый">Совмещённый</option>
+              <option value="раздельный">Раздельный</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Колонка 2: Этаж, Не последний, Не первый -->
+        <div class="fg-col">
+          <div class="fg-row">
+            <span class="fg-label">Этаж</span>
+            <div class="fg-range">
+              <input type="number" id="floorFrom" class="fg-input" placeholder="от">
+              <span class="dash">—</span>
+              <input type="number" id="floorTo" class="fg-input" placeholder="до">
+            </div>
+          </div>
+          <div class="fg-row fg-row-check">
+            <label class="check"><input type="checkbox" id="noLast"> Не последний этаж</label>
+          </div>
+          <div class="fg-row fg-row-check">
+            <label class="check"><input type="checkbox" id="noFirst"> Не первый этаж</label>
+          </div>
+        </div>
+
+        <!-- Колонка 3: Этажей в доме, Общая площадь, Площадь кухни -->
+        <div class="fg-col">
+          <div class="fg-row">
+            <span class="fg-label">Этажей в доме</span>
+            <div class="fg-range">
+              <input type="number" id="floorsFrom" class="fg-input" placeholder="от">
+              <span class="dash">—</span>
+              <input type="number" id="floorsTo" class="fg-input" placeholder="до">
+            </div>
+          </div>
+          <div class="fg-row">
+            <span class="fg-label">Общая площадь, м²</span>
+            <div class="fg-range">
+              <input type="number" id="areaFrom" class="fg-input" placeholder="от">
+              <span class="dash">—</span>
+              <input type="number" id="areaTo" class="fg-input" placeholder="до">
+            </div>
+          </div>
+          <div class="fg-row">
+            <span class="fg-label">Площадь кухни, м²</span>
+            <div class="fg-range">
+              <input type="number" id="kitchenFrom" class="fg-input" placeholder="от">
+              <span class="dash">—</span>
+              <input type="number" id="kitchenTo" class="fg-input" placeholder="до">
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /filter-grid-3col -->
+
+      <!-- Ещё настройки (скрыто до клика) -->
+      <div class="filter-more" id="filterMore" style="display:none">
+        <div class="filter-more-inner">
+          <div class="fg-row">
+            <span class="fg-label">Мебель</span>
+            <select id="furnished" class="fg-select">
+              <option value="any">не важно</option>
+              <option value="yes">меблирована</option>
+              <option value="no">без мебели</option>
+            </select>
+          </div>
+          <div class="fg-row">
+            <span class="fg-label">В залоге</span>
+            <select id="pledged" class="fg-select">
+              <option value="">не важно</option>
+              <option value="yes">да</option>
+              <option value="no">нет</option>
+            </select>
+          </div>
+          <div class="fg-row">
+            <span class="fg-label">Бывшее общежитие</span>
+            <select id="exDormitory" class="fg-select">
+              <option value="">не важно</option>
+              <option value="yes">да</option>
+              <option value="no">нет</option>
+            </select>
+          </div>
+          <label class="check"><input type="checkbox" id="fKids"> можно с детьми</label>
+          <label class="check"><input type="checkbox" id="fPets"> можно с животными</label>
+          <label class="check"><input type="checkbox" id="exchange"> возможен обмен</label>
+          <input type="text" id="textSearch" placeholder="поиск по тексту" class="fg-text-search">
+        </div>
+      </div>
+
+      <!-- Кнопки действий -->
+      <div class="filter-actions-row" id="filterActionsRow">
+        <div class="fal-left">
+          <button class="btn-more-settings" id="btnMoreSettings">⊞ Ещё настройки</button>
+          <button class="btn-clear" id="btnClear">✕ Очистить всё</button>
+        </div>
+        <button class="btn-apply" id="btnApply">Показать результаты</button>
+        <div class="view-toggle">
+          <button id="viewList" class="on">Списком</button>
+          <button id="viewMap">На карте</button>
+        </div>
+      </div>
+
+    </div><!-- /filter-zone-light -->
+
+    <!-- Скрытые элементы: нужны app.js -->
     <div style="display:none">
       <label id="myToggleWrap"><input type="checkbox" id="onlyMine"></label>
-      <button id="viewList" class="on">Списком</button>
-      <button id="viewMap">На карте</button>
-      <button id="btnClear">Очистить всё</button>
-      <input type="checkbox" id="fKids">
-      <input type="checkbox" id="fPets">
-      <input type="number" id="areaFrom">
-      <input type="number" id="areaTo">
-      <input type="number" id="floorFrom">
-      <input type="number" id="floorTo">
-      <select id="complex"><option value="">Любой ЖК</option></select>
-      <select id="furnished">
-        <option value="any">не важно</option>
-        <option value="yes">меблирована</option>
-        <option value="no">без мебели</option>
-      </select>
-      <input type="checkbox" id="noFirst">
-      <input type="checkbox" id="noLast">
-      <input type="text" id="textSearch">
     </div>
 
   </div>
@@ -125,7 +260,16 @@
   </div>
 </div>
 
-<div class="content">
+<!-- Горячие предложения — только на главной странице -->
+<div class="hot-section" id="hotSection">
+  <div class="container">
+    <h2 class="section-title">Горячие предложения</h2>
+    <div class="hot-grid" id="hotGrid"></div>
+  </div>
+</div>
+
+<!-- Результаты поиска — только на странице поиска -->
+<div class="content" id="searchContent" style="display:none">
   <div id="map"></div>
   <div class="list">
     <div class="list-title" id="listTitle"></div>

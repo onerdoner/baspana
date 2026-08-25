@@ -25,15 +25,26 @@
   .btn-add:hover { filter: brightness(.92); }
   .filters { background: transparent; padding: 12px 15px; }
   .filters .container {
-    background: #fce9b8;
     border: 1px solid #e8d49a;
     border-radius: 12px;
-    padding: 14px 15px;
+    overflow: hidden;
+    padding: 0;
     box-shadow: 0 2px 8px rgba(0,0,0,.06);
   }
-  .filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filter-dark-zone {
+    background: #f5c300;
+    padding: 12px 15px;
+  }
+  .filter-zone-light {
+    background: #fef8d6;
+    border-top: 1px solid #e8d49a;
+    padding: 14px 15px 0;
+  }
+  .filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
   .filter-row:last-child { margin-bottom: 0; }
   .filter-row--hidden { display: none !important; }
+  /* Первая строка поиска — разрешаем перенос для галочек */
+  .filter-row.filter-row-search { flex-wrap: wrap; gap: 8px 14px; margin-bottom: 0; }
   .flabel { font-size: 13px; color: var(--text-muted); }
   .deal { display: flex; border: 1px solid #d4b978; border-radius: 6px; overflow: hidden; }
   .deal button { background: var(--bg); border: none; padding: 9px 20px; cursor: pointer; font-size: 13px; color: var(--text); }
@@ -52,9 +63,6 @@
   .btn-results:hover { background: var(--blue-dark); }
   .btn-clear { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 13px; text-decoration: underline; }
   #myToggleWrap { display: none; }
-  .view-toggle { margin-left: auto; display: flex; border: 1px solid #d4b978; border-radius: 6px; overflow: hidden; }
-  .view-toggle button { background: var(--bg); border: none; padding: 10px 20px; cursor: pointer; font-size: 13px; color: var(--text); }
-  .view-toggle button.on { background: #f0f0f0; color: var(--text); font-weight: 600; }
   .content { display: flex; height: calc(100vh - 260px); min-height: 500px; max-width: 1260px; margin: 0 auto; width: 100%; }
   #map { flex: 1; }
   body.list-only #map { display: none; }
@@ -509,3 +517,134 @@
   cursor: pointer;
 }
 .city-modal-btn:hover { background: var(--blue-dark); }
+
+/* =====================
+   3-КОЛОНОЧНАЯ СЕТКА ФИЛЬТРОВ
+   ===================== */
+.filter-grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 28px;
+  padding-bottom: 10px;
+}
+.fg-col { display: flex; flex-direction: column; gap: 4px; }
+.fg-row { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+.fg-row-check { min-height: 22px; }
+.fg-label {
+  font-size: 12px;
+  color: #666;
+  min-width: 130px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+.fg-range { display: flex; align-items: center; gap: 4px; flex: 1; }
+.fg-input {
+  width: 64px !important;
+  height: 26px !important;
+  font-size: 12px !important;
+  padding: 0 6px !important;
+  border: 1px solid #c9b87a !important;
+  border-radius: 4px !important;
+  background: #fff !important;
+  box-sizing: border-box;
+}
+.fg-select {
+  height: 26px;
+  font-size: 12px;
+  padding: 0 4px;
+  border: 1px solid #c9b87a;
+  border-radius: 4px;
+  background: #fff;
+  flex: 1;
+  max-width: 200px;
+  min-width: 0;
+}
+.fg-text-search {
+  height: 26px;
+  font-size: 12px;
+  padding: 0 8px;
+  border: 1px solid #c9b87a;
+  border-radius: 4px;
+  background: #fff;
+  width: 200px;
+}
+
+/* Ещё настройки */
+.filter-more { border-top: 1px solid #e2d49a; margin-top: 4px; padding: 10px 0 6px; }
+.filter-more-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
+
+/* Строка кнопок действий */
+.filter-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #e2d49a;
+  margin-top: 4px;
+}
+.fal-left { display: flex; align-items: center; gap: 12px; }
+.btn-apply {
+  height: 36px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-apply:hover { background: var(--blue-dark); }
+.btn-more-settings {
+  height: 32px;
+  background: rgba(0,0,0,.07);
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  padding: 0 12px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-more-settings:hover { background: rgba(0,0,0,.13); }
+.btn-clear {
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #777;
+  font-size: 12px;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.btn-clear:hover { color: var(--red); }
+
+/* Переключатель Списком/На карте (в action row) */
+.view-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.view-toggle button { background: #fff; border: none; padding: 6px 14px; cursor: pointer; font-size: 12px; color: var(--text); }
+.view-toggle button.on { background: var(--blue); color: #fff; font-weight: 600; }
+
+/* Префикс/суффикс только на поиске */
+.fls-prefix { font-size: 14px; font-weight: 700; color: #333; white-space: nowrap; }
+.fls-suffix { font-size: 13px; color: #444; white-space: nowrap; }
+.fls-tg { font-size: 13px; color: #444; }
+
+/* =====================
+   ГЛАВНАЯ — горячие предложения
+   ===================== */
+.hot-section { padding: 20px 0 40px; }
+.hot-section .container { max-width: 1260px; margin: 0 auto; padding: 0 15px; }
+.section-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+.hot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+}
+.hot-grid .card { flex-direction: column; gap: 0; padding: 0; border-radius: 12px; }
+.hot-grid .card .photo { width: 100%; height: 170px; border-radius: 0; border-top-left-radius: 12px; border-top-right-radius: 12px; }
+.hot-grid .card .info { padding: 10px 12px 12px; }
+.hot-grid .card .price { font-size: 17px; font-weight: 700; }
+
+
