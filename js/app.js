@@ -214,6 +214,8 @@ function buildQuery(query) {
   if (f.exDormitory === "yes") query = query.eq("ex_dormitory", true);
   if (f.exDormitory === "no") query = query.eq("ex_dormitory", false);
   if (f.exchange) query = query.eq("exchange", true);
+  if (f.phoneFilter === "yes") query = query.not("phone", "is", null).neq("phone", "");
+  if (f.phoneFilter === "no") query = query.or("phone.is.null,phone.eq.");
   if (f.text) {
     const t = f.text.replace(/[(),%]/g, " ").trim();  // убираем спецсимволы
     if (t) query = query.or(`description.ilike.%${t}%,street.ilike.%${t}%,district.ilike.%${t}%`);
@@ -359,6 +361,7 @@ function getFilters() {
     pledged: document.getElementById("pledged").value,
     exDormitory: document.getElementById("exDormitory").value,
     exchange: document.getElementById("exchange").checked,
+    phoneFilter: document.getElementById("phoneFilter").value,
     text: document.getElementById("textSearch").value.trim().toLowerCase(),
   };
 }
@@ -641,6 +644,8 @@ function serializeFilters() {
   const exDorm = document.getElementById("exDormitory").value;
   if (exDorm) p.set("exdorm", exDorm);
   if (document.getElementById("exchange").checked) p.set("exchange", "1");
+  const phoneF = document.getElementById("phoneFilter").value;
+  if (phoneF) p.set("phonef", phoneF);
   const txt = document.getElementById("textSearch").value.trim();
   if (txt) p.set("q", txt);
   return p;
@@ -697,6 +702,7 @@ function deserializeFilters(p) {
   document.getElementById("pledged").value = p.get("pledged") || "";
   document.getElementById("exDormitory").value = p.get("exdorm") || "";
   document.getElementById("exchange").checked = p.get("exchange") === "1";
+  document.getElementById("phoneFilter").value = p.get("phonef") || "";
   document.getElementById("textSearch").value = p.get("q") || "";
 }
 
@@ -936,6 +942,7 @@ function setDeal(d) {
   document.getElementById("navRent").classList.toggle("active", d === "rent");
   document.getElementById("rentOnly").style.display = d === "rent" ? "inline-flex" : "none";
   document.querySelectorAll(".sale-only").forEach(el => el.style.display = d === "rent" ? "none" : "");
+  document.querySelectorAll(".rent-only").forEach(el => el.style.display = d === "rent" ? "" : "none");
   document.getElementById("priceFrom").value = "";
   document.getElementById("priceTo").value = "";
 }

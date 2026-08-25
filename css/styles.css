@@ -571,7 +571,8 @@
 
 /* Ещё настройки */
 .filter-more { border-top: 1px solid #e2d49a; margin-top: 4px; padding: 10px 0 8px; }
-.filter-more-grid { padding-bottom: 6px; }
+.filter-more-cols { display: flex; gap: 20px; align-items: flex-start; padding-bottom: 10px; }
+.fm-col { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .fg-text-row { padding-top: 8px; border-top: 1px solid #e8d49a; margin-top: 4px; }
 .fg-text-search-wide {
   flex: 1;

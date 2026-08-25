@@ -180,30 +180,10 @@
 
       <!-- Ещё настройки (скрыто до клика) -->
       <div class="filter-more" id="filterMore" style="display:none">
-        <div class="filter-grid-3col filter-more-grid">
+        <div class="filter-more-cols">
 
-          <!-- Колонка 1: Санузел, Мебель -->
-          <div class="fg-col">
-            <div class="fg-row">
-              <span class="fg-label">Санузел</span>
-              <select id="bathroom" class="fg-select">
-                <option value="">не важно</option>
-                <option value="совмещённый">Совмещённый</option>
-                <option value="раздельный">Раздельный</option>
-              </select>
-            </div>
-            <div class="fg-row">
-              <span class="fg-label">Мебель</span>
-              <select id="furnished" class="fg-select">
-                <option value="any">не важно</option>
-                <option value="yes">да</option>
-                <option value="no">нет</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Колонка 2: В залоге, Обмен, Дети -->
-          <div class="fg-col">
+          <!-- Колонка 1: В залоге, Санузел -->
+          <div class="fm-col">
             <div class="fg-row">
               <span class="fg-label">В залоге</span>
               <select id="pledged" class="fg-select">
@@ -212,16 +192,18 @@
                 <option value="no">нет</option>
               </select>
             </div>
-            <div class="fg-row fg-row-check">
-              <label class="check"><input type="checkbox" id="exchange"> Возможен обмен</label>
-            </div>
-            <div class="fg-row fg-row-check">
-              <label class="check"><input type="checkbox" id="fKids"> Можно с детьми</label>
+            <div class="fg-row">
+              <span class="fg-label">Санузел</span>
+              <select id="bathroom" class="fg-select">
+                <option value="">не важно</option>
+                <option value="совмещённый">Совмещённый</option>
+                <option value="раздельный">Раздельный</option>
+              </select>
             </div>
           </div>
 
-          <!-- Колонка 3: Бывшее общежитие, Животные -->
-          <div class="fg-col">
+          <!-- Колонка 2: Бывшее общежитие, Телефон -->
+          <div class="fm-col">
             <div class="fg-row">
               <span class="fg-label">Бывшее общежитие</span>
               <select id="exDormitory" class="fg-select">
@@ -230,8 +212,20 @@
                 <option value="no">нет</option>
               </select>
             </div>
+            <div class="fg-row">
+              <span class="fg-label">Телефон</span>
+              <select id="phoneFilter" class="fg-select">
+                <option value="">не важно</option>
+                <option value="yes">есть</option>
+                <option value="no">нет</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Колонка 3: Возможен обмен -->
+          <div class="fm-col">
             <div class="fg-row fg-row-check">
-              <label class="check"><input type="checkbox" id="fPets"> Можно с животными</label>
+              <label class="check"><input type="checkbox" id="exchange"> Возможен обмен</label>
             </div>
           </div>
 
@@ -240,6 +234,12 @@
         <div class="fg-row fg-text-row">
           <span class="fg-label">Поиск по тексту</span>
           <input type="text" id="textSearch" placeholder="улица, район, описание…" class="fg-text-search-wide">
+        </div>
+        <!-- Скрытые поля: логика сохраняется, в UI не показываются -->
+        <div style="display:none">
+          <select id="furnished"><option value="any">не важно</option><option value="yes">да</option><option value="no">нет</option></select>
+          <input type="checkbox" id="fKids">
+          <input type="checkbox" id="fPets">
         </div>
       </div>
 
