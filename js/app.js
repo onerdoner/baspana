@@ -713,59 +713,85 @@ function deserializeFilters(p) {
   document.getElementById("textSearch").value = p.get("q") || "";
 }
 
-async function loadHotOffers() {
-  if (!initDb()) return;
-  const grid = document.getElementById("hotGrid");
-  grid.innerHTML = Array(6).fill(`
-    <div class="card skeleton">
-      <div class="skeleton-photo" style="width:100%;height:170px;border-radius:12px 12px 0 0"></div>
-      <div class="skeleton-info" style="padding:10px 12px">
-        <div class="skeleton-line w70"></div>
-        <div class="skeleton-line w50"></div>
-        <div class="skeleton-line w40"></div>
-      </div>
-    </div>`).join("");
-  const { data } = await db.from("listings")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(12);
-  if (!data || !data.length) {
-    grid.innerHTML = '<div class="empty">Нет объявлений</div>';
-    return;
-  }
-  const items = data.map(rowToItem);
-  grid.innerHTML = items.map(item => {
-    const imgs = (item.images && item.images.length) ? item.images : (item.imageUrl ? [item.imageUrl] : []);
-    const photo = imgs.length
-      ? `<div class="photo" style="background-image:url('${imgs[0]}');background-size:cover;background-position:center">${imgs.length > 1 ? `<span class="photo-count">${imgs.length} фото</span>` : ""}</div>`
-      : `<div class="photo" style="background:${item.color}"><span class="card-room-label">${item.rooms}-комн.</span></div>`;
-    return `
-    <div class="card" data-id="${item.id}">
-      <span class="fav ${favoriteIds.has(item.id) ? "on" : ""}" data-fav="${item.id}">♥</span>
-      ${photo}
-      <div class="info">
-        <div class="price">${priceLabel(item)}</div>
-        <div class="title">${item.rooms}-комн. квартира · ${item.area} м² · ${item.floor}/${item.floorsTotal} этаж</div>
-        <div class="addr">${item.district} р-н, ул. ${item.street}</div>
-        <div class="meta">
-          <span>${item.date}</span>
-          ${item.isNew ? "<span class='card-new'>новостройка</span>" : ""}
-        </div>
-      </div>
-    </div>`;
-  }).join("");
-  grid.querySelectorAll(".card").forEach(el => {
+function hotCardHtml(item, dealLabel) {
+  const imgs = (item.images && item.images.length) ? item.images : (item.imageUrl ? [item.imageUrl] : []);
+  const photoCount = imgs.length > 1 ? `<span class="photo-count">${imgs.length} фото</span>` : "";
+  const cityBadge = `<span class="hot-city">${item.city}</span>`;
+  const photo = imgs.length
+    ? `<div class="photo" style="background-image:url('${imgs[0]}');background-size:cover;background-position:center">${cityBadge}${photoCount}</div>`
+    : `<div class="photo" style="background:${item.color}">${cityBadge}<span class="card-room-label">${item.rooms}-комн.</span></div>`;
+  const tooltip = `${dealLabel} квартир в ${item.city}: ${item.rooms}-комн. - ${item.area} м² - ${item.floor}/${item.floorsTotal} эт., ${item.district} р-н, ул. ${item.street} за ${formatPrice(item.price)}`;
+  return `
+  <div class="card" data-id="${item.id}" title="${tooltip}">
+    <span class="fav ${favoriteIds.has(item.id) ? "on" : ""}" data-fav="${item.id}">♥</span>
+    ${photo}
+    <div class="info">
+      <div class="price">${priceLabel(item)}</div>
+      <div class="title">${item.rooms}-комн. · ${item.area} м² · ${item.floor}/${item.floorsTotal} эт.</div>
+      <div class="addr">${item.district} р-н, ул. ${item.street}</div>
+      <div class="meta"><span>${item.date}</span>${item.isNew ? "<span class='card-new'>новостройка</span>" : ""}</div>
+    </div>
+  </div>`;
+}
+
+function bindHotGrid(gridEl, items) {
+  gridEl.querySelectorAll(".card").forEach(el => {
     el.addEventListener("click", (e) => {
       if (e.target.closest("[data-fav]")) return;
       const item = items.find(x => x.id === +el.dataset.id);
       if (item) openDetail(item);
     });
   });
-  grid.querySelectorAll("[data-fav]").forEach(el => {
+  gridEl.querySelectorAll("[data-fav]").forEach(el => {
     el.addEventListener("click", async (e) => {
       e.stopPropagation();
       const state = await toggleFavorite(+el.dataset.fav);
       if (state !== null) el.classList.toggle("on", state);
+    });
+  });
+}
+
+const skeletonCards = Array(6).fill(`
+  <div class="card skeleton">
+    <div class="skeleton-photo" style="width:100%;height:170px;border-radius:12px 12px 0 0"></div>
+    <div class="skeleton-info" style="padding:10px 12px">
+      <div class="skeleton-line w70"></div>
+      <div class="skeleton-line w50"></div>
+      <div class="skeleton-line w40"></div>
+    </div>
+  </div>`).join("");
+
+async function loadHotOffers() {
+  if (!initDb()) return;
+  const gridSale = document.getElementById("hotGridSale");
+  const gridRent = document.getElementById("hotGridRent");
+  gridSale.innerHTML = skeletonCards;
+
+  const [resSale, resRent] = await Promise.all([
+    db.from("listings").select("*").eq("deal_type", "sale").order("created_at", { ascending: false }).limit(6),
+    db.from("listings").select("*").eq("deal_type", "rent").order("created_at", { ascending: false }).limit(6),
+  ]);
+
+  const saleItems = (resSale.data || []).map(rowToItem);
+  const rentItems = (resRent.data || []).map(rowToItem);
+
+  gridSale.innerHTML = saleItems.length
+    ? saleItems.map(item => hotCardHtml(item, "Продажа")).join("")
+    : '<div class="empty">Нет объявлений</div>';
+  gridRent.innerHTML = rentItems.length
+    ? rentItems.map(item => hotCardHtml(item, "Аренда")).join("")
+    : '<div class="empty">Нет объявлений</div>';
+
+  bindHotGrid(gridSale, saleItems);
+  bindHotGrid(gridRent, rentItems);
+
+  document.querySelectorAll(".hot-deal-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".hot-deal-tab").forEach(t => t.classList.remove("on"));
+      tab.classList.add("on");
+      const type = tab.dataset.type;
+      gridSale.style.display = type === "sale" ? "" : "none";
+      gridRent.style.display = type === "rent" ? "" : "none";
     });
   });
 }
