@@ -24,8 +24,14 @@ const COLORS = ["#5b8def","#e07a5f","#81b29a","#f2cc8f","#9d84b7","#e29578","#83
 
 // Жилые комплексы по городам (для фильтра и формы)
 const COMPLEXES = {
-  "Алматы": ["Central Avenue","ALA Park","ALA Town","7Su Nury","AFD Plaza","Esentai Tower",
-    "Dostyk Residence","Nova City","Comfort City","Botanika","Green Park","Hayat Park","Almaly Park","BI City"],
+  "Алматы": [
+    "7Su Nury","AFD Plaza","ALA Park","ALA Town","Almaly Park","Aura",
+    "BI City","Botanika","Central Avenue","Comfort City","Dream City Family",
+    "Esentai City","Green Park","Hayat Park","Highvill","Mega Tower",
+    "Nova City","O'NER Towers","Sensata","Tumar","Verdi","Vista",
+    "Аскарова","Бельведер","Керемет","Мерей","Ремизовка","Розмарин",
+    "Сымбат","Тау Самал","Экватор",
+  ],
   "Астана": ["Triumph Astana","Nurly Tau","Capital Hill","Highvill","Park View","Expo City","Riverside"],
   "Шымкент": ["Нурлы Жол","Арман","Достык Plaza","Алтын Орда"],
 };
@@ -579,6 +585,7 @@ function showSearchView(mapMode) {
   document.getElementById("searchContent").style.display = "flex";
   if (mapMode) showMap(); else showList();
   applyNow();
+  updateCount();
 }
 
 function navigateToSearch(mapMode) {
@@ -945,6 +952,24 @@ function setDeal(d) {
   document.querySelectorAll(".rent-only").forEach(el => el.style.display = d === "rent" ? "" : "none");
   document.getElementById("priceFrom").value = "";
   document.getElementById("priceTo").value = "";
+  updateCount();
+}
+
+/* ДИНАМИЧЕСКИЙ СЧЁТЧИК КНОПКИ "Показать результаты" */
+let _countTimer = null;
+async function updateCount() {
+  if (currentView !== "search" || !initDb()) return;
+  const { count } = await buildQuery(
+    db.from("listings").select("*", { count: "exact", head: true })
+  );
+  const btn = document.getElementById("btnApply");
+  btn.textContent = count !== null
+    ? `Показать результаты (${count.toLocaleString("ru-RU")})`
+    : "Показать результаты";
+}
+function scheduleCount() {
+  clearTimeout(_countTimer);
+  _countTimer = setTimeout(updateCount, 250);
 }
 
 /* ОКНА */
@@ -1037,7 +1062,15 @@ document.querySelectorAll("#rooms button").forEach(btn => {
     btn.classList.toggle("on");
     if (activeRooms.includes(r)) activeRooms = activeRooms.filter(x => x !== r);
     else activeRooms.push(r);
+    if (currentView === "search") updateCount();
   });
+});
+
+// Счётчик: изменение фильтров → обновить число в кнопке
+const _filtersEl = document.querySelector(".filters");
+_filtersEl.addEventListener("change", () => { if (currentView === "search") updateCount(); });
+_filtersEl.addEventListener("input", e => {
+  if (currentView === "search" && e.target.tagName === "INPUT") scheduleCount();
 });
 
 const cityNames = Object.keys(CITIES);
@@ -1111,7 +1144,9 @@ document.getElementById("btnClear").addEventListener("click", () => {
   document.getElementById("pledged").value = "";
   document.getElementById("exDormitory").value = "";
   document.getElementById("textSearch").value = "";
+  document.getElementById("phoneFilter").value = "";
   applyNow();
+  updateCount();
 });
 
 document.getElementById("btnOpenForm").addEventListener("click", () => openForm());
@@ -1185,6 +1220,7 @@ document.getElementById("cityModalSelect").addEventListener("click", () => {
   const label = modalDistrict ? `${modalCity}, ${modalDistrict} ▾` : `${modalCity} ▾`;
   document.getElementById("cityBtn").textContent = label;
   closeCityModal();
+  updateCount();
 });
 
 document.getElementById("btnMapInline").addEventListener("click", () => navigateToSearch(true));
