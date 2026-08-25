@@ -23,8 +23,14 @@
   header .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
   .btn-add { background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .btn-add:hover { filter: brightness(.92); }
-  .filters { background: #fce9b8; border-bottom: 1px solid #e8d49a; }
-  .filters .container { padding: 14px 15px; }
+  .filters { background: transparent; padding: 12px 15px; }
+  .filters .container {
+    background: #fce9b8;
+    border: 1px solid #e8d49a;
+    border-radius: 12px;
+    padding: 14px 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
   .filter-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
   .filter-row:last-child { margin-bottom: 0; }
   .filter-row--hidden { display: none !important; }
