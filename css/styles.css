@@ -200,12 +200,18 @@
   .btn-submit:disabled { background: #d7dde5; color: #98a0ab; cursor: default; }
   .btn-cancel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 10px 20px; font-size: 13px; cursor: pointer; color: var(--text); }
 
-  /* страница объявления */
-  .detail { position: fixed; inset: 0; background: var(--bg-secondary); z-index: 1500; overflow-y: auto; display: none; }
+  /* страница объявления — обычная страница сайта, не оверлей */
+  .detail { display: none; padding: 20px 0 40px; }
   .detail.open { display: block; }
-  .detail-inner { max-width: 1140px; margin: 0 auto; padding: 20px 24px 80px; }
-  .detail-back { background: none; border: none; color: var(--blue); font-size: 14px; cursor: pointer; padding: 8px 0 16px; display: block; }
-  .detail-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  .detail-inner { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+  .breadcrumbs { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+  .breadcrumbs a { color: var(--text-muted); }
+  .breadcrumbs a:hover { color: var(--blue); text-decoration: underline; }
+  .breadcrumbs span { margin: 0 6px; }
+  .detail-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .detail-actions { display: flex; gap: 10px; flex-shrink: 0; }
+  .detail-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0 20px; }
+  .detail-title { font-size: 22px; font-weight: 700; margin-bottom: 0; color: var(--text); }
   .detail-price-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
   .detail-price { font-size: 28px; font-weight: 800; color: var(--text); }
   .badge-new { background: #e8f5e9; color: var(--green); font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }

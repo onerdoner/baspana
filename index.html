@@ -380,6 +380,11 @@
           </div>
 
           <div class="fp-field">
+            <label class="fp-label">Высота потолков, м</label>
+            <input type="number" step="0.1" id="f_ceilingHeight" placeholder="напр. 2.7" class="fp-input fp-input-sm">
+          </div>
+
+          <div class="fp-field">
             <label class="fp-label">Этаж</label>
             <div class="fp-inline">
               <input type="number" id="f_floor" placeholder="этаж" class="fp-input fp-input-sm">
@@ -566,10 +571,10 @@
   </div>
 </div>
 
-<!-- СТРАНИЦА ОБЪЯВЛЕНИЯ (открывается при клике на карточку) -->
+<!-- СТРАНИЦА ОБЪЯВЛЕНИЯ (открывается в новой вкладке, своя страница, не оверлей) -->
 <div class="detail" id="detail">
   <div class="detail-inner">
-    <button class="detail-back" id="detailBack">← Назад к списку</button>
+    <div class="breadcrumbs" id="detailBreadcrumbs"></div>
     <div id="detailHead"></div>
     <div class="detail-grid">
       <div class="detail-left">

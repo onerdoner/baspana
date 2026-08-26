@@ -183,21 +183,23 @@ async function runConfirm() {
 // заметки — без полной перерисовки всего списка (та резко меняет высоту
 // страницы на скелетонах и сбрасывает скролл наверх).
 function refreshCardNoteUI(id) {
+  const note = notesMap.get(id);
+
+  // кнопки "заметка"/"избранное" — везде, где они есть для этого id
+  // (карточка в списке И/ИЛИ шапка страницы объявления)
+  document.querySelectorAll(`[data-note="${id}"]`).forEach(btn => {
+    btn.textContent = "✏ " + (note ? "Редактировать заметку" : "Оставить заметку");
+  });
+  document.querySelectorAll(`[data-fav="${id}"]`).forEach(btn => {
+    const on = favoriteIds.has(id);
+    btn.classList.toggle("on", on);
+    btn.textContent = favBtnLabel(on);
+  });
+
+  // превью заметки под карточкой — только в списке поиска
   const card = document.querySelector(`#listGrid .card[data-id="${id}"]`);
   if (!card) return;
   const block = card.closest(".card-block");
-  const note = notesMap.get(id);
-
-  const noteBtn = card.querySelector("[data-note]");
-  if (noteBtn) noteBtn.textContent = "✏ " + (note ? "Редактировать заметку" : "Оставить заметку");
-
-  const favBtn = card.querySelector("[data-fav]");
-  if (favBtn) {
-    const on = favoriteIds.has(id);
-    favBtn.classList.toggle("on", on);
-    favBtn.textContent = favBtnLabel(on);
-  }
-
   let preview = block ? block.querySelector(".note-preview") : null;
   if (note) {
     if (!preview && block) {
@@ -294,6 +296,7 @@ function rowToItem(row) {
     pets: row.pets_allowed, kids: row.kids_allowed,
     imageUrl: row.image_url, images: row.images || [], city: row.city || "Алматы",
     complex: row.complex, kitchenArea: row.kitchen_area, bathroom: row.bathroom,
+    ceilingHeight: row.ceiling_height,
     sellerType: row.seller_type, pledged: row.pledged,
     exDormitory: row.ex_dormitory, exchange: row.exchange,
     date: "18 августа", views: Math.floor(Math.random() * 300),
@@ -367,6 +370,7 @@ async function submitListing() {
   const dealType = document.getElementById("f_deal").value;
   const rooms = +document.getElementById("f_rooms").value;
   const area = +document.getElementById("f_area").value;
+  const ceilingHeight = +document.getElementById("f_ceilingHeight").value || null;
   const floor = +document.getElementById("f_floor").value;
   const floorsTotal = +document.getElementById("f_floorsTotal").value;
   const price = +document.getElementById("f_price").value;
@@ -416,7 +420,7 @@ async function submitListing() {
   }
 
   const { error } = await db.from("listings").insert({
-    rooms, area, floor, floors_total: floorsTotal, price,
+    rooms, area, ceiling_height: ceilingHeight, floor, floors_total: floorsTotal, price,
     district, street, lat, lng, is_new: isNew, has_photo: images.length > 0, color,
     deal_type: dealType, house_type: houseType, year_built: yearBuilt,
     condition, phone, description,
@@ -589,7 +593,7 @@ function renderList(items, total) {
       if (e.target.dataset.del) return;
       if (e.target.closest(".note-preview")) return;
       const item = items.find(x => x.id === +el.dataset.id);
-      if (item) openDetail(item);
+      if (item) openListingInNewTab(item.id);
     });
   });
   // клик по "удалить" (не открывая страницу)
@@ -636,7 +640,7 @@ function renderMarkers(items) {
     const firstImg = (item.images && item.images.length) ? item.images[0] : item.imageUrl;
     const popupImg = firstImg ? `<img src="${firstImg}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;margin-bottom:6px">` : "";
     marker.bindPopup(`${popupImg}<b>${priceLabel(item)}</b><br>${item.rooms}-комн. · ${item.area} м² · ${item.floor}/${item.floorsTotal} эт.<br>${item.district} р-н, ул. ${item.street}`);
-    marker.on("click", () => openDetail(item));
+    marker.on("click", () => openListingInNewTab(item.id));
     clusterLayer.addLayer(marker);
   });
 }
@@ -726,6 +730,9 @@ function applyNow() { currentPage = 1; update(); }
    ========================================================= */
 function showHomeView() {
   currentView = "home";
+  // На случай перехода со страницы объявления — возвращаем панель фильтров и прячем объявление
+  document.querySelector(".filters").style.display = "";
+  document.getElementById("detail").classList.remove("open");
   // Переключатель Купить/Арендовать — виден только на главной
   document.getElementById("deal").style.display = "";
   // Скрываем поисковые метки
@@ -756,6 +763,9 @@ function showHomeView() {
 
 function showSearchView(mapMode) {
   currentView = "search";
+  // На случай перехода со страницы объявления — возвращаем панель фильтров и прячем объявление
+  document.querySelector(".filters").style.display = "";
+  document.getElementById("detail").classList.remove("open");
   // Скрываем переключатель Купить/Арендовать
   document.getElementById("deal").style.display = "none";
   // Показываем поисковые метки
@@ -933,7 +943,7 @@ function bindHotGrid(gridEl, items) {
     el.addEventListener("click", (e) => {
       if (e.target.closest("[data-fav]")) return;
       const item = items.find(x => x.id === +el.dataset.id);
-      if (item) openDetail(item);
+      if (item) openListingInNewTab(item.id);
     });
   });
   gridEl.querySelectorAll("[data-fav]").forEach(el => {
@@ -985,34 +995,47 @@ async function loadHotOffers() {
    Открывается при клике на карточку или точку на карте.
    ========================================================= */
 let detailMap = null, detailMarker = null;
-function openDetail(item) {
-  const mine = currentUser && item.userId === currentUser.id;
-  const perM2 = Math.round(item.price / item.area).toLocaleString("ru-RU").replace(/,/g, " ");
 
-  document.getElementById("detailHead").innerHTML =
-    `<div class="detail-title">${item.rooms}-комн. квартира · ${item.area} м² · ${item.floor}/${item.floorsTotal} этаж</div>
-     <div class="detail-price-row">
-       <div class="detail-price">${priceLabel(item)}</div>
-       ${item.isNew ? '<span class="badge-new">Новостройка</span>' : ''}
-     </div>`;
+// заголовок, кнопки и цена — своя функция, чтобы дёргать отдельно из refreshCardNoteUI не пришлось:
+// кнопки достаточно перерисовать через data-note/data-fav (см. refreshCardNoteUI)
+function renderListingContent(item) {
+  const dealLabel = item.dealType === "rent" ? "Аренда" : "Продажа";
+  document.getElementById("detailBreadcrumbs").innerHTML = `
+    <a href="${location.pathname}">baspana.kz</a>
+    <span>/</span>
+    <a href="${location.pathname}?view=search&deal=${item.dealType}">${dealLabel} квартир</a>`;
+
+  const note = notesMap.get(item.id);
+  const favOn = favoriteIds.has(item.id);
+  document.getElementById("detailHead").innerHTML = `
+    <div class="detail-title-row">
+      <div class="detail-title">${item.rooms}-комнатная квартира · ${item.area} м², ${item.street}</div>
+      <div class="detail-actions">
+        <button class="note-btn" data-note="${item.id}">✏ ${note ? "Редактировать заметку" : "Оставить заметку"}</button>
+        <button class="fav-btn ${favOn ? "on" : ""}" data-fav="${item.id}">${favBtnLabel(favOn)}</button>
+      </div>
+    </div>
+    <hr class="detail-divider">
+    <div class="detail-price-row">
+      <div class="detail-price">${priceLabel(item)}</div>
+      ${item.isNew ? '<span class="badge-new">Новостройка</span>' : ''}
+    </div>`;
+  document.querySelector("#detailHead [data-note]").addEventListener("click", () => openNoteModal(item.id));
+  document.querySelector("#detailHead [data-fav]").addEventListener("click", async (e) => {
+    const state = await toggleFavorite(item.id);
+    if (state === null) return;
+    e.currentTarget.classList.toggle("on", state);
+    e.currentTarget.textContent = favBtnLabel(state);
+  });
 
   document.getElementById("detailInfo").innerHTML = `
     <div class="attr"><span class="k">Город</span><span class="v">${item.city}, ${item.district} р-н</span></div>
-    <div class="attr"><span class="k">Улица</span><span class="v">${item.street}</span></div>
     <div class="attr"><span class="k">Тип дома</span><span class="v">${item.houseType || "—"}</span></div>
     ${item.complex ? `<div class="attr"><span class="k">Жилой комплекс</span><span class="v">${item.complex}</span></div>` : ""}
     <div class="attr"><span class="k">Год постройки</span><span class="v">${item.yearBuilt || "—"}</span></div>
-    <div class="attr"><span class="k">Этаж</span><span class="v">${item.floor} из ${item.floorsTotal}</span></div>
     <div class="attr"><span class="k">Площадь</span><span class="v">${item.area} м²</span></div>
-    ${item.kitchenArea ? `<div class="attr"><span class="k">Площадь кухни</span><span class="v">${item.kitchenArea} м²</span></div>` : ""}
-    <div class="attr"><span class="k">Состояние</span><span class="v">${item.condition || "—"}</span></div>
     ${item.bathroom ? `<div class="attr"><span class="k">Санузел</span><span class="v">${item.bathroom}</span></div>` : ""}
-    <div class="attr"><span class="k">Цена за м²</span><span class="v">${perM2} ₸</span></div>
-    <div class="attr"><span class="k">Меблирована</span><span class="v">${item.furnished ? "да" : "нет"}</span></div>
-    ${item.dealType === "rent" ? `
-      <div class="attr"><span class="k">Можно с детьми</span><span class="v">${item.kids ? "да" : "нет"}</span></div>
-      <div class="attr"><span class="k">Можно с животными</span><span class="v">${item.pets ? "да" : "нет"}</span></div>` : ""}
-    ${item.isNew ? '<div class="attr"><span class="k">Новостройка</span><span class="v">да</span></div>' : ""}`;
+    ${item.ceilingHeight ? `<div class="attr"><span class="k">Высота потолков</span><span class="v">${item.ceilingHeight} м</span></div>` : ""}`;
 
   const photo = document.getElementById("detailPhoto");
   const thumbs = document.getElementById("detailThumbs");
@@ -1060,9 +1083,7 @@ function openDetail(item) {
     sp.classList.add("revealed");
   });
 
-  document.getElementById("detail").classList.add("open");
   window.scrollTo(0, 0);
-  history.pushState({ listingId: item.id }, '', location.search + '#' + item.id);
 
   // мини-карта объявления (создаём один раз, потом переиспользуем)
   setTimeout(() => {
@@ -1079,17 +1100,38 @@ function openDetail(item) {
 
   renderSimilar(item);
 }
-function closeDetail() {
-  document.getElementById("detail").classList.remove("open");
-  if (location.hash) history.pushState({}, '', location.pathname + location.search);
+
+// показывает страницу объявления: прячет витрину/поиск/панель фильтров,
+// показывает #detail (обычный раздел страницы, не оверлей)
+function showListingSection() {
+  currentView = "listing";
+  document.querySelector(".filters").style.display = "none";
+  document.getElementById("hotSection").style.display = "none";
+  document.getElementById("searchContent").style.display = "none";
+  document.getElementById("detail").classList.add("open");
 }
 
-// Загружает одно объявление из базы по ID и открывает его.
-// Нужно для прямых ссылок вида site.com/#12345
+// переход на другое объявление той же вкладкой (напр. клик по "похожему") —
+// объект уже есть на руках, запрос к базе не нужен
+function navigateToListingItem(item) {
+  history.pushState({ view: "listing", listing: item.id }, "", location.pathname + "?listing=" + item.id);
+  showListingSection();
+  renderListingContent(item);
+}
+
+// Загружает одно объявление из базы по ID и показывает его.
+// Используется при первом открытии страницы и при Назад/Вперёд в браузере.
 async function loadAndOpenListing(id) {
   if (!initDb()) return;
   const { data, error } = await db.from("listings").select("*").eq("id", id).single();
-  if (!error && data) openDetail(rowToItem(data));
+  if (error || !data) { showBanner("Объявление не найдено."); return; }
+  showListingSection();
+  renderListingContent(rowToItem(data));
+}
+
+// открыть объявление в новой вкладке (клик по карточке в списке/на карте)
+function openListingInNewTab(id) {
+  window.open(location.pathname + "?listing=" + id, "_blank");
 }
 
 /* ЛАЙТБОКС */
@@ -1144,7 +1186,7 @@ async function renderSimilar(item) {
   el.querySelectorAll(".similar-card").forEach(card => {
     card.addEventListener("click", () => {
       const found = items.find(x => x.id === +card.dataset.id);
-      if (found) openDetail(found);
+      if (found) navigateToListingItem(found);
     });
   });
 }
@@ -1250,13 +1292,12 @@ document.getElementById("navFav").addEventListener("click", () => {
   else navigateToSearch(false);
 });
 document.getElementById("logo").addEventListener("click", () => {
-  if (document.getElementById("detail").classList.contains("open")) {
-    closeDetail();
+  if (currentView === "listing") {
+    location.href = location.pathname;
   } else if (currentView === "search") {
     showHomeView();
   }
 });
-document.getElementById("detailBack").addEventListener("click", closeDetail);
 
 document.querySelectorAll("#sortBar button").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -1448,33 +1489,24 @@ document.getElementById("cityModalSelect").addEventListener("click", () => {
 document.getElementById("btnMapInline").addEventListener("click", () => navigateToSearch(true));
 
 /* СТАРТ */
-async function start() {
-  await refreshAuth();
+// разбирает текущий URL и показывает нужный вид: страницу объявления
+// (?listing=id), поиск (?view=search&...) или главную
+async function routeFromUrl() {
   const p = new URLSearchParams(location.search);
-  if (p.get("view") === "search") {
+  const listingId = parseInt(p.get("listing"));
+  if (listingId) {
+    await loadAndOpenListing(listingId);
+  } else if (p.get("view") === "search") {
     deserializeFilters(p);
     showSearchView(p.get("map") === "1");
-    const id = parseInt(location.hash.slice(1));
-    if (id) await loadAndOpenListing(id);
   } else {
     showHomeView();
-    const id = parseInt(location.hash.slice(1));
-    if (id) await loadAndOpenListing(id);
   }
+}
+async function start() {
+  await refreshAuth();
+  await routeFromUrl();
 }
 start();
 
-window.addEventListener("popstate", () => {
-  const p = new URLSearchParams(location.search);
-  if (p.get("view") === "search") {
-    deserializeFilters(p);
-    showSearchView(p.get("map") === "1");
-    const id = parseInt(location.hash.slice(1));
-    if (id) loadAndOpenListing(id);
-  } else {
-    showHomeView();
-    const id = parseInt(location.hash.slice(1));
-    if (id) loadAndOpenListing(id);
-    else document.getElementById("detail").classList.remove("open");
-  }
-});
+window.addEventListener("popstate", routeFromUrl);
