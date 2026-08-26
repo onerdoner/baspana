@@ -784,16 +784,6 @@ async function loadHotOffers() {
 
   bindHotGrid(gridSale, saleItems);
   bindHotGrid(gridRent, rentItems);
-
-  document.querySelectorAll(".hot-deal-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".hot-deal-tab").forEach(t => t.classList.remove("on"));
-      tab.classList.add("on");
-      const type = tab.dataset.type;
-      gridSale.style.display = type === "sale" ? "" : "none";
-      gridRent.style.display = type === "rent" ? "" : "none";
-    });
-  });
 }
 
 /* =========================================================

@@ -654,10 +654,10 @@ body.list-only .fav { right: auto; left: 208px; }
 .hot-section .container { max-width: 1260px; margin: 0 auto; padding: 0 15px; }
 .section-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
 
-/* Табы Продажа / Аренда */
-.hot-deal-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-.hot-deal-tab { background: none; border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 18px; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all .15s; }
-.hot-deal-tab.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+/* Блоки Продажа / Аренда — идут друг под другом */
+.hot-block { margin-bottom: 28px; }
+.hot-block:last-child { margin-bottom: 0; }
+.hot-block-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
 
 .hot-grid {
   display: grid;
