@@ -533,6 +533,39 @@
   </div>
 </div>
 
+<!-- Окно заметки -->
+<div class="overlay" id="noteOverlay">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h2 id="noteTitle">Оставить заметку</h2>
+      <button class="modal-close" id="noteClose">✕</button>
+    </div>
+    <div class="field">
+      <div class="note-field-head">
+        <label>Текст заметки</label>
+        <span id="noteCount">0/299</span>
+      </div>
+      <textarea id="noteText" class="fp-textarea" maxlength="299"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnNoteDelete" style="display:none">Удалить заметку</button>
+      <button class="btn-submit" id="btnNoteSave" disabled>Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Окно подтверждения -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:400px">
+    <h2 id="confirmTitle">Удалить заметку?</h2>
+    <div class="sub" id="confirmSub">Удалённую заметку не получится восстановить</div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnConfirmCancel">Оставить</button>
+      <button class="btn-submit" id="btnConfirmOk">Удалить</button>
+    </div>
+  </div>
+</div>
+
 <!-- СТРАНИЦА ОБЪЯВЛЕНИЯ (открывается при клике на карточку) -->
 <div class="detail" id="detail">
   <div class="detail-inner">

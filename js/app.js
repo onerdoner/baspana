@@ -54,6 +54,7 @@ async function refreshAuth() {
   currentUser = data.user || null;
   renderAuthUI();
   await loadFavorites();
+  await loadNotes();
 }
 
 /* ИЗБРАННОЕ */
@@ -90,6 +91,134 @@ async function toggleFavorite(id) {
     return true;
   }
 }
+/* ЗАМЕТКИ */
+let notesMap = new Map();   // listing_id -> текст заметки (только у текущего пользователя)
+
+async function loadNotes() {
+  notesMap = new Map();
+  if (currentUser) {
+    const { data, error } = await db.from("notes").select("listing_id,text");
+    if (!error && data) data.forEach(r => notesMap.set(r.listing_id, r.text));
+  }
+}
+
+// сохранить/обновить заметку. Заодно добавляет объявление в избранное (как на krisha.kz).
+async function saveNote(id, text) {
+  if (!currentUser) { openAuth("Войди, чтобы оставить заметку."); return false; }
+  const { error } = await db.from("notes").upsert(
+    { listing_id: id, user_id: currentUser.id, text, updated_at: new Date().toISOString() },
+    { onConflict: "listing_id,user_id" }
+  );
+  if (error) { alert("Ошибка: " + error.message); return false; }
+  notesMap.set(id, text);
+  if (!favoriteIds.has(id)) {
+    const { error: favError } = await db.from("favorites").insert({ listing_id: id });
+    if (!favError) { favoriteIds.add(id); updateFavCount(); }
+  }
+  return true;
+}
+
+async function deleteNote(id) {
+  const { error } = await db.from("notes").delete().eq("listing_id", id);
+  if (error) { alert("Ошибка: " + error.message); return false; }
+  notesMap.delete(id);
+  return true;
+}
+
+let noteEditId = null;
+function openNoteModal(id) {
+  if (!currentUser) { openAuth("Войди, чтобы оставить заметку."); return; }
+  noteEditId = id;
+  const existing = notesMap.get(id) || "";
+  document.getElementById("noteTitle").textContent = existing ? "Редактировать заметку" : "Оставить заметку";
+  const ta = document.getElementById("noteText");
+  ta.value = existing;
+  updateNoteCount();
+  document.getElementById("btnNoteDelete").style.display = existing ? "" : "none";
+  document.getElementById("noteOverlay").classList.add("open");
+  ta.focus();
+}
+function closeNoteModal() {
+  document.getElementById("noteOverlay").classList.remove("open");
+  noteEditId = null;
+}
+function updateNoteCount() {
+  const ta = document.getElementById("noteText");
+  document.getElementById("noteCount").textContent = ta.value.length + "/299";
+  document.getElementById("btnNoteSave").disabled = ta.value.trim().length === 0;
+}
+async function saveNoteFromModal() {
+  const text = document.getElementById("noteText").value.trim();
+  if (!text || noteEditId == null) return;
+  const id = noteEditId;
+  if (await saveNote(id, text)) { closeNoteModal(); refreshCardNoteUI(id); }
+}
+function deleteNoteFromModal() {
+  if (noteEditId == null) return;
+  const id = noteEditId;
+  openConfirm("Удалить заметку?", "Удалённую заметку не получится восстановить", async () => {
+    if (await deleteNote(id)) { closeNoteModal(); refreshCardNoteUI(id); }
+  });
+}
+
+/* ОКНО ПОДТВЕРЖДЕНИЯ (переиспользуется, напр. для удаления заметки) */
+let confirmCallback = null;
+function openConfirm(title, sub, onConfirm) {
+  document.getElementById("confirmTitle").textContent = title;
+  document.getElementById("confirmSub").textContent = sub;
+  confirmCallback = onConfirm;
+  document.getElementById("confirmOverlay").classList.add("open");
+}
+function closeConfirm() {
+  document.getElementById("confirmOverlay").classList.remove("open");
+  confirmCallback = null;
+}
+async function runConfirm() {
+  const cb = confirmCallback;
+  closeConfirm();
+  if (cb) await cb();
+}
+
+// точечно обновляет одну карточку в списке поиска после сохранения/удаления
+// заметки — без полной перерисовки всего списка (та резко меняет высоту
+// страницы на скелетонах и сбрасывает скролл наверх).
+function refreshCardNoteUI(id) {
+  const card = document.querySelector(`#listGrid .card[data-id="${id}"]`);
+  if (!card) return;
+  const block = card.closest(".card-block");
+  const note = notesMap.get(id);
+
+  const noteBtn = card.querySelector("[data-note]");
+  if (noteBtn) noteBtn.textContent = "✏ " + (note ? "Редактировать заметку" : "Оставить заметку");
+
+  const favBtn = card.querySelector("[data-fav]");
+  if (favBtn) {
+    const on = favoriteIds.has(id);
+    favBtn.classList.toggle("on", on);
+    favBtn.textContent = favBtnLabel(on);
+  }
+
+  let preview = block ? block.querySelector(".note-preview") : null;
+  if (note) {
+    if (!preview && block) {
+      preview = document.createElement("div");
+      preview.className = "note-preview";
+      block.appendChild(preview);
+    }
+    if (preview) {
+      preview.innerHTML = `<span>${escapeHtml(note)}</span><button class="note-preview-close" data-note-remove="${id}">✕</button>`;
+      preview.querySelector("[data-note-remove]").addEventListener("click", (e) => {
+        e.stopPropagation();
+        openConfirm("Удалить заметку?", "Удалённую заметку не получится восстановить", async () => {
+          if (await deleteNote(id)) refreshCardNoteUI(id);
+        });
+      });
+    }
+  } else if (preview) {
+    preview.remove();
+  }
+}
+
 function renderAuthUI() {
   const box = document.getElementById("authBox");
   const myWrap = document.getElementById("myToggleWrap");
@@ -139,6 +268,7 @@ async function logout() {
   favMode = false;
   document.getElementById("navFav").classList.remove("active");
   await loadFavorites();
+  await loadNotes();
   if (currentView === "search") applyNow();
 }
 
@@ -329,6 +459,40 @@ function shortPrice(item) {
   return s + suf;
 }
 
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/* Строка общей информации карточки: В Залоге, ЖК/тип дома, год, состояние,
+   санузел, телефон, остаток — описание. Максимум 150 символов. */
+function buildCardInfoLine(item) {
+  const attrs = [];
+  attrs.push(item.complex ? `жилой комплекс ${item.complex}` : (item.houseType ? `${item.houseType} дом` : null));
+  if (item.yearBuilt) attrs.push(`${item.yearBuilt} г.п.`);
+  if (item.condition) attrs.push(`состояние: ${item.condition}`);
+  if (item.bathroom) attrs.push(`санузел: ${item.bathroom}`);
+  attrs.push(`телефон: ${item.phone ? "есть" : "нет"}`);
+  const attrsPlain = attrs.filter(Boolean).join(", ");
+
+  const pledgedPrefix = item.pledged ? "В Залоге, " : "";
+  const budget = Math.max(0, 150 - pledgedPrefix.length);
+
+  let rest = attrsPlain;
+  if (item.description) rest += ", " + item.description;
+  if (rest.length > budget) rest = rest.slice(0, Math.max(0, budget - 1)).trim() + "…";
+
+  const pledgedHtml = item.pledged ? `<span class="card-pledged">В Залоге</span>, ` : "";
+  return pledgedHtml + escapeHtml(rest);
+}
+
+function favBtnLabel(on) { return on ? "♥ В Избранном" : "♥ В Избранное"; }
+
+function sellerBadgeHtml(item) {
+  if (item.sellerType === "owner") return `<span class="seller-badge owner">Хозяин недвижимости</span>`;
+  if (item.sellerType === "agent") return `<span class="seller-badge agent">Крыша Агент</span>`;
+  return "";
+}
+
 /* ФИЛЬТРАЦИЯ */
 let activeRooms = [];
 let activeDeal = "sale";
@@ -388,27 +552,42 @@ function renderList(items, total) {
     const photo = imgs.length
       ? `<div class="photo" style="background-image:url('${imgs[0]}');background-size:cover;background-position:center">${imgs.length > 1 ? `<span class="photo-count">${imgs.length} фото</span>` : ""}</div>`
       : `<div class="photo" style="background:${item.color}"><span class="card-room-label">${item.rooms}-комн.</span></div>`;
+    const infoLine = buildCardInfoLine(item);
+    const seller = sellerBadgeHtml(item);
+    const note = notesMap.get(item.id);
     return `
-    <div class="card" data-id="${item.id}">
-      <span class="fav ${favoriteIds.has(item.id) ? "on" : ""}" data-fav="${item.id}">♥</span>
-      ${photo}
-      <div class="info">
-        <div class="price">${priceLabel(item)}</div>
-        <div class="title">${item.rooms}-комн. квартира · ${item.area} м² · ${item.floor}/${item.floorsTotal} этаж</div>
-        <div class="addr">${item.district} р-н, ул. ${item.street}</div>
-        <div class="meta">
-          <span>${item.date}</span>
-          <span>👁 ${item.views}</span>
-          ${item.isNew ? "<span class='card-new'>новостройка</span>" : ""}
-          ${mine ? `<span class="del" data-del="${item.id}">удалить</span>` : ""}
+    <div class="card-block" data-id="${item.id}">
+      <div class="card" data-id="${item.id}">
+        ${photo}
+        <div class="info">
+          <div class="card-top">
+            <div class="title">${item.rooms}-комн. квартира · ${item.area} м² · ${item.floor}/${item.floorsTotal} этаж</div>
+            <div class="price">${priceLabel(item)}</div>
+          </div>
+          <div class="addr">${item.district} р-н, ул. ${item.street}</div>
+          ${infoLine ? `<div class="card-info-line">${infoLine}</div>` : ""}
+          ${seller}
+          <div class="meta">
+            <span>${item.city}</span>
+            <span>${item.date}</span>
+            <span>👁 ${item.views}</span>
+            ${item.isNew ? "<span class='card-new'>новостройка</span>" : ""}
+            ${mine ? `<span class="del" data-del="${item.id}">удалить</span>` : ""}
+          </div>
+          <div class="card-actions">
+            <button class="fav-btn ${favoriteIds.has(item.id) ? "on" : ""}" data-fav="${item.id}">${favBtnLabel(favoriteIds.has(item.id))}</button>
+            <button class="note-btn" data-note="${item.id}">✏ ${note ? "Редактировать заметку" : "Оставить заметку"}</button>
+          </div>
         </div>
       </div>
+      ${note ? `<div class="note-preview"><span>${escapeHtml(note)}</span><button class="note-preview-close" data-note-remove="${item.id}">✕</button></div>` : ""}
     </div>`;
   }).join("");
   // клик по карточке -> страница объявления
-  grid.querySelectorAll(".card").forEach(el => {
+  grid.querySelectorAll(".card-block").forEach(el => {
     el.addEventListener("click", (e) => {
       if (e.target.dataset.del) return;
+      if (e.target.closest(".note-preview")) return;
       const item = items.find(x => x.id === +el.dataset.id);
       if (item) openDetail(item);
     });
@@ -425,6 +604,21 @@ function renderList(items, total) {
       if (state === null) return;      // не вошёл
       if (favMode) return;             // список сам пересоберётся
       el.classList.toggle("on", state);
+      el.textContent = favBtnLabel(state);
+    });
+  });
+  // клик по "Оставить/Редактировать заметку"
+  grid.querySelectorAll("[data-note]").forEach(el => {
+    el.addEventListener("click", (e) => { e.stopPropagation(); openNoteModal(+el.dataset.note); });
+  });
+  // клик по крестику на превью заметки — быстрое удаление
+  grid.querySelectorAll("[data-note-remove]").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = +el.dataset.noteRemove;
+      openConfirm("Удалить заметку?", "Удалённую заметку не получится восстановить", async () => {
+        if (await deleteNote(id)) refreshCardNoteUI(id);
+      });
     });
   });
 }
@@ -1172,6 +1366,18 @@ document.getElementById("btnSignIn").addEventListener("click", signIn);
 document.getElementById("btnSignUp").addEventListener("click", signUp);
 document.getElementById("authClose").addEventListener("click", closeAuth);
 document.getElementById("authOverlay").addEventListener("click", (e) => { if (e.target.id === "authOverlay") closeAuth(); });
+
+/* МОДАЛЬНОЕ ОКНО ЗАМЕТКИ */
+document.getElementById("noteText").addEventListener("input", updateNoteCount);
+document.getElementById("btnNoteSave").addEventListener("click", saveNoteFromModal);
+document.getElementById("btnNoteDelete").addEventListener("click", deleteNoteFromModal);
+document.getElementById("noteClose").addEventListener("click", closeNoteModal);
+document.getElementById("noteOverlay").addEventListener("click", (e) => { if (e.target.id === "noteOverlay") closeNoteModal(); });
+
+/* МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ */
+document.getElementById("btnConfirmOk").addEventListener("click", runConfirm);
+document.getElementById("btnConfirmCancel").addEventListener("click", closeConfirm);
+document.getElementById("confirmOverlay").addEventListener("click", (e) => { if (e.target.id === "confirmOverlay") closeConfirm(); });
 
 /* МОДАЛЬНОЕ ОКНО ВЫБОРА ГОРОДА */
 let modalCity = "Алматы";

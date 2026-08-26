@@ -86,15 +86,28 @@
   .card-new { color: var(--green); font-weight: 600; }
   .del { color: var(--red); cursor: pointer; text-decoration: underline; }
 
-  /* Карточки в режиме списка — горизонтальные, krisha-style */
-  body.list-only .list-grid { grid-template-columns: 1fr; gap: 10px; }
-  body.list-only .card { flex-direction: row; gap: 0; padding: 0; border-radius: 12px; min-height: 140px; }
-  body.list-only .card .photo { width: 240px; height: 160px; flex-shrink: 0; border-radius: 12px 0 0 12px; }
-  body.list-only .card .info { padding: 14px 16px; flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; grid-template-areas: "title price" "addr price" "meta price"; gap: 4px 20px; align-content: start; }
-  body.list-only .card .title { grid-area: title; font-size: 14px; font-weight: 600; color: #333; margin: 0; }
-  body.list-only .card .addr { grid-area: addr; color: var(--text-muted); font-size: 13px; }
-  body.list-only .card .meta { grid-area: meta; font-size: 11px; color: var(--text-muted); margin: 0; align-self: end; }
-  body.list-only .card .price { grid-area: price; align-self: start; font-size: 20px; font-weight: 700; white-space: nowrap; padding-top: 2px; }
+  /* Карточки в режиме списка — горизонтальные, krisha-style.
+     Каждое объявление — строка между двумя разделительными линиями,
+     без своей рамки/тени и без подсветки при наведении (как на krisha.kz);
+     кликабельна вся строка целиком, включая отступы сверху/снизу. */
+  body.list-only .list-grid { grid-template-columns: 1fr; gap: 0; }
+  body.list-only .card-block { border-top: 1px solid var(--border); padding: 20px 0; cursor: pointer; }
+  body.list-only .card-block:last-child { border-bottom: 1px solid var(--border); }
+  body.list-only .card { flex-direction: row; gap: 0; padding: 0; border: none; border-radius: 0; background: transparent; min-height: 0; max-width: 860px; }
+  body.list-only .card:hover { box-shadow: none; }
+  body.list-only .card .photo { width: 240px; height: auto; flex-shrink: 0; align-self: stretch; border-radius: 12px; }
+  body.list-only .card .info { padding: 0 0 0 16px; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  body.list-only .card .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  body.list-only .card .title { font-size: 14px; font-weight: 600; color: #333; margin: 0; }
+  body.list-only .card .addr { color: var(--text-muted); font-size: 13px; }
+  body.list-only .card .card-info-line { color: #777; font-size: 12px; line-height: 1.5; margin-top: 2px; }
+  body.list-only .card .card-pledged { color: var(--red); font-weight: 600; }
+  body.list-only .card .seller-badge { align-self: flex-start; margin-top: 4px; font-size: 12px; }
+  body.list-only .card .seller-badge.owner { background: #fff2c2; color: #8a6d00; font-weight: 600; padding: 3px 10px; border-radius: 12px; }
+  body.list-only .card .seller-badge.agent { color: #666; font-weight: 600; }
+  body.list-only .card .meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  body.list-only .card .price { font-size: 20px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+  body.list-only .card .card-actions { margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
   .price-pin { background: #fff; border: 1.5px solid var(--blue); color: var(--blue); font-weight: 700; font-size: 13px; padding: 5px 9px; border-radius: 16px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
   .empty { color: #999; text-align: center; padding: 40px 20px; }
   .banner { background: #ffe1e1; color: var(--red); padding: 12px 24px; font-size: 13px; display: none; }
@@ -171,12 +184,20 @@
   .modal { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; padding: 28px; }
   .modal h2 { font-size: 22px; margin-bottom: 4px; }
   .modal .sub { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .modal-head h2 { margin-bottom: 0; }
+  .modal-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted); line-height: 1; padding: 2px 6px; }
+  .modal-close:hover { color: var(--text); }
   .field { margin-bottom: 16px; }
   .field label { display: block; font-size: 14px; color: #444; margin-bottom: 6px; }
   .field input { width: 100%; height: 42px; border: 1px solid #ccc; border-radius: 8px; padding: 0 12px; font-size: 15px; background: #fff; }
+  .note-field-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .note-field-head label { font-size: 14px; color: #444; }
+  .note-field-head span { font-size: 13px; color: var(--text-muted); }
   .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
   .btn-submit { flex: 1; background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .btn-submit:hover { background: var(--blue-dark); }
+  .btn-submit:disabled { background: #d7dde5; color: #98a0ab; cursor: default; }
   .btn-cancel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 10px 20px; font-size: 13px; cursor: pointer; color: var(--text); }
 
   /* страница объявления */
@@ -226,11 +247,24 @@
 .detail-thumbs img { width: 74px; height: 56px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
 .detail-thumbs img.active { border-color: var(--blue); }
 
-/* Избранное (сердечко) */
+/* Избранное (сердечко) — карточки на главной */
 .fav { position: absolute; top: 8px; right: 12px; font-size: 20px; line-height: 1; cursor: pointer; color: var(--border); z-index: 2; text-shadow: 0 1px 2px rgba(0,0,0,.15); }
 .fav:hover { color: #f0a6b8; }
 .fav.on { color: var(--red); }
-body.list-only .fav { right: auto; left: 208px; }
+
+/* Избранное (кнопка) — карточки на странице поиска */
+.fav-btn { background: #fff; border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #333; cursor: pointer; transition: all .15s; }
+.fav-btn:hover { border-color: #f0a6b8; }
+.fav-btn.on { border-color: var(--red); color: var(--red); }
+
+/* Оставить / редактировать заметку */
+.note-btn { background: #fff; border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #333; cursor: pointer; transition: all .15s; }
+.note-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Превью сохранённой заметки под карточкой */
+.note-preview { max-width: 860px; margin-top: 8px; background: var(--bg-secondary); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: #444; }
+.note-preview-close { background: none; border: none; color: var(--text-muted); font-size: 14px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
+.note-preview-close:hover { color: var(--text); }
 
 /* Лайтбокс */
 .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.93); z-index: 3000; display: none; align-items: center; justify-content: center; }
@@ -305,8 +339,8 @@ body.list-only .fav { right: auto; left: 208px; }
   .content { flex-direction: column; height: auto !important; min-height: 0 !important; }
   .list { width: 100%; overflow-y: visible; }
   body.list-only .list { max-width: 100%; }
-  body.list-only .card .photo { width: 160px; height: 120px; }
-  body.list-only .fav { left: 126px; }
+  body.list-only .card { max-width: none; }
+  body.list-only .card .photo { width: 160px; }
 
   /* В режиме карты: карта занимает половину экрана, список ниже */
   #map { height: 50vh; }
@@ -343,9 +377,9 @@ body.list-only .fav { right: auto; left: 208px; }
 
   body.list-only .card { flex-direction: column; }
   body.list-only .card .photo { width: 100%; height: 160px; border-radius: 12px 12px 0 0; }
-  body.list-only .card .info { grid-template-columns: 1fr; grid-template-areas: "title" "addr" "price" "meta"; gap: 4px; }
+  body.list-only .card .info { padding: 12px 16px 0; }
+  body.list-only .card .card-top { flex-direction: column; gap: 2px; }
   body.list-only .card .price { white-space: normal; font-size: 17px; }
-  body.list-only .fav { left: auto; right: 12px; }
 
   .detail-photo { height: 200px; }
   .detail-title { font-size: 18px; }
