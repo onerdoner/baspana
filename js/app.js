@@ -318,6 +318,10 @@ function rowToItem(row) {
     ceilingHeight: row.ceiling_height,
     doorType: row.door_type, parking: row.parking, balcony: row.balcony,
     kitchenStudio: row.kitchen_studio, security: row.security,
+    houseNumber: row.house_number, crossStreet: row.cross_street, hideHouseNumber: row.hide_house_number,
+    phoneLine: row.phone_line, internet: row.internet, balconyGlazed: row.balcony_glazed,
+    floorType: row.floor_type, features: row.features, contactName: row.contact_name,
+    phones: row.phones || [],
     sellerType: row.seller_type, pledged: row.pledged,
     exDormitory: row.ex_dormitory, exchange: row.exchange,
     date: "18 августа", views: Math.floor(Math.random() * 300),
@@ -388,38 +392,68 @@ async function submitListing() {
   if (!initDb()) return;
   const msg = document.getElementById("formMsg");
   const btn = document.getElementById("btnSubmit");
+
   const dealType = document.getElementById("f_deal").value;
   const rooms = +document.getElementById("f_rooms").value;
-  const area = +document.getElementById("f_area").value;
-  const ceilingHeight = +document.getElementById("f_ceilingHeight").value || null;
-  const floor = +document.getElementById("f_floor").value;
-  const floorsTotal = +document.getElementById("f_floorsTotal").value;
   const price = +document.getElementById("f_price").value;
+  const pledged = document.getElementById("f_pledged").value === "true";
+  const houseType = document.getElementById("f_houseType").value || null;
+  const yearBuilt = +document.getElementById("f_year").value || null;
+  const floor = +document.getElementById("f_floor").value || null;
+  const floorsTotal = +document.getElementById("f_floorsTotal").value || null;
+  const area = +document.getElementById("f_area").value;
+  const kitchenArea = +document.getElementById("f_kitchenArea").value || null;
+  const exDormitory = document.getElementById("f_exDormitory").value === "true";
+  const isNew = document.getElementById("f_isNew").value === "true";
+
   const city = document.getElementById("f_city").value;
   const district = document.getElementById("f_district").value;
-  const street = document.getElementById("f_street").value.trim();
   const complex = document.getElementById("f_complex").value || null;
-  const houseType = document.getElementById("f_houseType").value;
-  const yearBuilt = +document.getElementById("f_year").value || null;
-  const condition = document.getElementById("f_condition").value;
-  const doorType = document.getElementById("f_doorType").value;
-  const parking = document.getElementById("f_parking").value;
-  const balcony = document.getElementById("f_balcony").value;
-  const phone = document.getElementById("f_phone").value.trim();
-  const description = document.getElementById("f_desc").value.trim();
-  const isNew = document.getElementById("f_isNew").value === "true";
-  const rentPeriod = document.getElementById("f_rentPeriod").value;
+  const street = document.getElementById("f_street").value.trim();
+  const houseNumber = document.getElementById("f_houseNumber").value.trim();
+  const crossStreet = document.getElementById("f_crossStreet").value.trim() || null;
+  const hideHouseNumber = document.getElementById("f_hideHouseNumber").checked;
+  const lat = +document.getElementById("f_lat").value;
+  const lng = +document.getElementById("f_lng").value;
+
+  const condition = document.getElementById("f_condition").value || null;
+  const phoneLine = document.getElementById("f_phoneLine").value || null;
+  const internet = document.getElementById("f_internet").value || null;
+  const bathroom = document.getElementById("f_bathroom").value || null;
+  const balcony = document.getElementById("f_balcony").value || null;
+  const balconyGlazed = document.getElementById("f_balconyGlazed").value === "true";
+  const doorType = document.getElementById("f_doorType").value || null;
+  const parking = document.getElementById("f_parking").value || null;
   const furnished = document.getElementById("f_furnished").value === "yes";
+  const floorType = document.getElementById("f_floorType").value || null;
+  const ceilingHeight = +document.getElementById("f_ceilingHeight").value || null;
+
+  const security = Array.from(document.querySelectorAll(".f_security:checked")).map(cb => cb.value).join(", ") || null;
+  const features = Array.from(document.querySelectorAll(".f_feature:checked")).map(cb => cb.value).join(", ") || null;
+  const kitchenStudio = document.getElementById("f_kitchenStudio").checked;
+
+  const description = document.getElementById("f_desc").value.trim();
+
+  const sellerType = document.getElementById("f_sellerType").value;
+  const contactName = document.getElementById("f_contactName").value.trim();
+  const exchange = document.getElementById("f_exchange").value === "true";
+  const phones = Array.from(document.querySelectorAll(".f_phone")).map(i => i.value.trim()).filter(Boolean);
+  const agree = document.getElementById("f_agree").checked;
+
+  const rentPeriod = document.getElementById("f_rentPeriod").value;
   const kids = document.getElementById("f_kids").value === "true";
   const pets = document.getElementById("f_pets").value === "true";
 
-  if (!area || !floor || !floorsTotal || !price || !street) {
-    msg.className = "form-msg err"; msg.textContent = "Заполни площадь, этажи, цену и улицу."; return;
+  if (!rooms || !price || !yearBuilt || !area || !street || !houseNumber || !contactName || !phones.length) {
+    msg.className = "form-msg err"; msg.textContent = "Заполни все обязательные поля (отмечены звёздочкой)."; return;
   }
-  const base = CITIES[city].districts[district];
-  const lat = +(base[0] + (Math.random() - 0.5) * 0.03).toFixed(6);
-  const lng = +(base[1] + (Math.random() - 0.5) * 0.04).toFixed(6);
+  if (!agree) {
+    msg.className = "form-msg err"; msg.textContent = "Нужно согласиться с правилами размещения объявлений."; return;
+  }
+
   const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+  // "Скрыть номер дома" — не добавляем его в отображаемый адрес
+  const streetDisplay = hideHouseNumber ? street : `${street} ${houseNumber}`;
 
   btn.disabled = true; msg.className = "form-msg"; msg.textContent = "Сохраняю…";
 
@@ -444,12 +478,19 @@ async function submitListing() {
   }
 
   const { error } = await db.from("listings").insert({
-    rooms, area, ceiling_height: ceilingHeight, floor, floors_total: floorsTotal, price,
-    district, street, lat, lng, is_new: isNew, has_photo: images.length > 0, color,
-    deal_type: dealType, house_type: houseType, year_built: yearBuilt,
-    condition, door_type: doorType, parking, balcony, phone, description,
-    rent_period: dealType === "rent" ? rentPeriod : "month",
-    furnished, kids_allowed: kids, pets_allowed: pets,
+    rooms, area, kitchen_area: kitchenArea, ceiling_height: ceilingHeight,
+    floor, floors_total: floorsTotal, price, pledged,
+    district, street: streetDisplay, house_number: houseNumber, cross_street: crossStreet,
+    hide_house_number: hideHouseNumber, lat, lng,
+    is_new: isNew, has_photo: images.length > 0, color,
+    deal_type: dealType, house_type: houseType, year_built: yearBuilt, ex_dormitory: exDormitory,
+    condition, phone_line: phoneLine, internet, bathroom, balcony, balcony_glazed: balconyGlazed,
+    door_type: doorType, parking, furnished, floor_type: floorType,
+    security, features, kitchen_studio: kitchenStudio,
+    description, rent_period: dealType === "rent" ? rentPeriod : "month",
+    kids_allowed: kids, pets_allowed: pets, exchange,
+    seller_type: sellerType, contact_name: contactName,
+    phone: phones[0], phones,
     image_url: images[0] || null, images: images.length ? images : null, city, complex,
   });
   btn.disabled = false;
@@ -754,9 +795,11 @@ function applyNow() { currentPage = 1; update(); }
    ========================================================= */
 function showHomeView() {
   currentView = "home";
-  // На случай перехода со страницы объявления — возвращаем панель фильтров и прячем объявление
+  // На случай перехода со страницы объявления/формы подачи — возвращаем панель фильтров, прячем их
   document.querySelector(".filters").style.display = "";
   document.getElementById("detail").classList.remove("open");
+  document.getElementById("formCategory").classList.remove("open");
+  document.getElementById("formPage").classList.remove("open");
   // Переключатель Купить/Арендовать — виден только на главной
   document.getElementById("deal").style.display = "";
   // Скрываем поисковые метки
@@ -788,9 +831,11 @@ function showHomeView() {
 
 function showSearchView(mapMode) {
   currentView = "search";
-  // На случай перехода со страницы объявления — возвращаем панель фильтров и прячем объявление
+  // На случай перехода со страницы объявления/формы подачи — возвращаем панель фильтров, прячем их
   document.querySelector(".filters").style.display = "";
   document.getElementById("detail").classList.remove("open");
+  document.getElementById("formCategory").classList.remove("open");
+  document.getElementById("formPage").classList.remove("open");
   // Скрываем переключатель Купить/Арендовать
   document.getElementById("deal").style.display = "none";
   // Показываем поисковые метки ("Квартиры" — только для Продажи, у Аренды на этом месте период)
@@ -1318,21 +1363,78 @@ function scheduleCount() {
 }
 
 /* ОКНА */
-function openForm() {
+// ШАГ 1: выбор категории (Продать / Сдать в аренду)
+// прячет витрину/поиск/страницу объявления — но НЕ шапку сайта,
+// она должна оставаться видна на всех шагах подачи объявления
+function hideOtherSections() {
+  document.querySelector(".filters").style.display = "none";
+  document.getElementById("hotSection").style.display = "none";
+  document.getElementById("searchContent").style.display = "none";
+  document.getElementById("detail").classList.remove("open");
+}
+
+function openFormCategory() {
   if (!currentUser) { openAuth("Сначала войди, чтобы подать объявление."); return; }
+  currentView = "form";
+  hideOtherSections();
+  document.getElementById("formPage").classList.remove("open");
+  document.getElementById("formCategory").classList.add("open");
+  window.scrollTo(0, 0);
+}
+function closeFormCategory() {
+  document.getElementById("formCategory").classList.remove("open");
+}
+
+// ШАГ 2: сама форма — открывается после выбора категории на шаге 1
+function chooseCategory(deal) {
+  currentView = "form";
+  hideOtherSections();
+  closeFormCategory();
   document.getElementById("formMsg").textContent = "";
-  // Синхронизируем тип сделки с текущим активным
-  const dealHidden = document.getElementById("f_deal");
-  dealHidden.value = activeDeal;
-  document.querySelectorAll(".toggle-group[data-field='f_deal'] .toggle-btn").forEach(b => {
-    b.classList.toggle("on", b.dataset.val === activeDeal);
-  });
+  resetFormFields();
+  document.getElementById("f_deal").value = deal;
+  document.getElementById("formBreadcrumb").textContent = deal === "rent" ? "Сдать в аренду > Квартиру" : "Продать > Квартиру";
   updateFormDeal();
   document.getElementById("formPage").classList.add("open");
   window.scrollTo(0, 0);
+  initFormMap(document.getElementById("f_city").value);
 }
 function closeForm() {
   document.getElementById("formPage").classList.remove("open");
+}
+
+// ставит группе (choice-group/yn-link-group/tag-group/seller-type-cards)
+// значение по умолчанию — и в скрытое поле, и подсвечивает нужную кнопку
+function setGroupDefault(fieldId, val) {
+  document.getElementById(fieldId).value = val;
+  document.querySelectorAll(`[data-field="${fieldId}"] button`).forEach(b => b.classList.toggle("on", b.dataset.val === val));
+}
+
+// возвращает форму к пустому состоянию перед новым объявлением
+function resetFormFields() {
+  document.querySelectorAll("#formPage .choice-group button, #formPage .yn-link-group button, #formPage .seller-type-cards button")
+    .forEach(b => b.classList.remove("on"));
+  setGroupDefault("f_pledged", "false");
+  setGroupDefault("f_exDormitory", "false");
+  setGroupDefault("f_isNew", "false");
+  setGroupDefault("f_kids", "false");
+  setGroupDefault("f_pets", "false");
+  setGroupDefault("f_balconyGlazed", "false");
+  setGroupDefault("f_exchange", "false");
+  setGroupDefault("f_sellerType", "owner");
+  setGroupDefault("f_rentPeriod", "month");
+  ["f_houseType", "f_condition", "f_phoneLine", "f_internet", "f_bathroom", "f_balcony", "f_doorType", "f_parking", "f_furnished", "f_floorType"]
+    .forEach(id => document.getElementById(id).value = "");
+  document.getElementById("f_houseTypeSelect").value = "";
+  document.querySelectorAll('#formPage input[type=text], #formPage input[type=number]').forEach(i => i.value = "");
+  document.querySelectorAll(".f_security, .f_feature").forEach(cb => cb.checked = false);
+  document.getElementById("f_kitchenStudio").checked = false;
+  document.getElementById("f_hideHouseNumber").checked = false;
+  document.getElementById("f_agree").checked = true;
+  document.getElementById("f_photoPreview").innerHTML = "";
+  document.getElementById("f_photo").value = "";
+  document.getElementById("f_descCount").textContent = "2000";
+  document.getElementById("f_phonesList").innerHTML = '<div class="fp-phone-row"><input type="text" class="f_phone fp-input" placeholder="+7 777 123 45 67"></div>';
 }
 function openAuth(hint) {
   document.getElementById("authMsg").textContent = "";
@@ -1347,29 +1449,83 @@ function updateFormDeal() {
   document.getElementById("f_rentChecks").style.display = isRent ? "block" : "none";
 }
 
-// Обработчики для тег-кнопок, переключателей и Да/Нет
-document.querySelectorAll(".tag-group, .toggle-group, .yn-group").forEach(group => {
+// Обработчики для тег-кнопок, переключателей, Да/Нет, характеристик-ссылок и карточек продавца
+document.querySelectorAll(".tag-group, .toggle-group, .yn-group, .choice-group, .yn-link-group, .seller-type-cards").forEach(group => {
   const fieldId = group.dataset.field;
   group.querySelectorAll("button").forEach(btn => {
     btn.addEventListener("click", () => {
       group.querySelectorAll("button").forEach(b => b.classList.remove("on"));
       btn.classList.add("on");
       if (fieldId) document.getElementById(fieldId).value = btn.dataset.val;
-      if (fieldId === "f_deal") updateFormDeal();
     });
   });
 });
 
-// Превью фото при выборе файлов
-document.getElementById("f_photo").addEventListener("change", () => {
+// "Тип строения" — обычный select, синхронизируем со скрытым полем
+document.getElementById("f_houseTypeSelect").addEventListener("change", (e) => {
+  document.getElementById("f_houseType").value = e.target.value;
+});
+
+// Превью фото при выборе файлов (клик по зоне или перетаскивание)
+function renderPhotoPreview(files) {
   const preview = document.getElementById("f_photoPreview");
   preview.innerHTML = "";
-  Array.from(document.getElementById("f_photo").files).forEach(file => {
+  Array.from(files).forEach(file => {
     const img = document.createElement("img");
     img.src = URL.createObjectURL(file);
     preview.appendChild(img);
   });
+}
+document.getElementById("f_photo").addEventListener("change", () => {
+  renderPhotoPreview(document.getElementById("f_photo").files);
 });
+const photoDropZone = document.querySelector(".photo-drop-zone");
+photoDropZone.addEventListener("dragover", (e) => { e.preventDefault(); photoDropZone.classList.add("drag-over"); });
+photoDropZone.addEventListener("dragleave", () => photoDropZone.classList.remove("drag-over"));
+photoDropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  photoDropZone.classList.remove("drag-over");
+  const input = document.getElementById("f_photo");
+  input.files = e.dataTransfer.files;
+  renderPhotoPreview(input.files);
+});
+
+// Счётчик оставшихся символов описания
+document.getElementById("f_desc").addEventListener("input", (e) => {
+  document.getElementById("f_descCount").textContent = 2000 - e.target.value.length;
+});
+
+// "+ Добавить ещё телефоны"
+document.getElementById("btnAddPhone").addEventListener("click", (e) => {
+  e.preventDefault();
+  const row = document.createElement("div");
+  row.className = "fp-phone-row";
+  row.innerHTML = `<input type="text" class="f_phone fp-input" placeholder="+7 777 123 45 67"><button type="button" class="fp-phone-remove">✕</button>`;
+  row.querySelector(".fp-phone-remove").addEventListener("click", () => row.remove());
+  document.getElementById("f_phonesList").appendChild(row);
+});
+
+// Карта выбора расположения — перетаскиваемая метка вместо случайных координат
+let formMap = null, formMarker = null;
+function initFormMap(city) {
+  const c = CITIES[city].center;
+  if (!formMap) {
+    formMap = L.map("f_map").setView(c, CITIES[city].zoom || 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap", maxZoom: 19 }).addTo(formMap);
+    formMarker = L.marker(c, { draggable: true }).addTo(formMap);
+    formMarker.on("dragend", () => {
+      const pos = formMarker.getLatLng();
+      document.getElementById("f_lat").value = pos.lat.toFixed(6);
+      document.getElementById("f_lng").value = pos.lng.toFixed(6);
+    });
+  } else {
+    formMap.setView(c, CITIES[city].zoom || 12);
+    formMarker.setLatLng(c);
+  }
+  document.getElementById("f_lat").value = c[0].toFixed(6);
+  document.getElementById("f_lng").value = c[1].toFixed(6);
+  setTimeout(() => formMap.invalidateSize(), 100);
+}
 
 // клик вне меню "Личный кабинет" — закрыть (меню каждый раз перерисовывается,
 // поэтому слушатель один, глобальный, ищет элемент заново)
@@ -1394,7 +1550,7 @@ document.getElementById("navFav").addEventListener("click", () => {
 document.getElementById("logo").addEventListener("click", () => {
   if (currentView === "listing") {
     location.href = location.pathname;
-  } else if (currentView === "search") {
+  } else if (currentView === "search" || currentView === "form") {
     showHomeView();
   }
 });
@@ -1470,6 +1626,7 @@ fillDistricts(districtForm, "Алматы", false);
 cityForm.addEventListener("change", () => {
   fillDistricts(districtForm, cityForm.value, false);
   fillComplexes(cityForm.value);
+  if (formMap) initFormMap(cityForm.value);
 });
 
 document.getElementById("btnResults").addEventListener("click", () => navigateToSearch(false));
@@ -1500,8 +1657,14 @@ document.getElementById("btnClear").addEventListener("click", () => {
   updateCount();
 });
 
-document.getElementById("btnOpenForm").addEventListener("click", () => openForm());
-document.getElementById("btnCancel").addEventListener("click", closeForm);
+document.getElementById("btnOpenForm").addEventListener("click", () => openFormCategory());
+document.getElementById("catSale").addEventListener("click", () => chooseCategory("sale"));
+document.getElementById("catRent").addEventListener("click", () => chooseCategory("rent"));
+document.getElementById("btnCancel").addEventListener("click", (e) => {
+  e.preventDefault();
+  closeForm();
+  openFormCategory();
+});
 document.getElementById("btnSubmit").addEventListener("click", submitListing);
 document.getElementById("btnSignIn").addEventListener("click", signIn);
 document.getElementById("btnSignUp").addEventListener("click", signUp);

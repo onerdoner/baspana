@@ -334,40 +334,68 @@
 </div>
 
 <!-- Форма подачи — полная страница -->
+<!-- ШАГ 1: выбор категории объявления -->
+<div class="form-page" id="formCategory">
+  <div class="form-page-inner">
+    <h1 class="form-page-title">Подать объявление</h1>
+    <div class="form-page-body">
+      <div class="form-main">
+        <h2 class="form-category-title">Новое объявление</h2>
+        <div class="form-category-box">
+          <button class="form-category-item" id="catSale">Продать квартиру</button>
+          <button class="form-category-item" id="catRent">Сдать в аренду квартиру</button>
+        </div>
+      </div>
+      <div class="form-sidebar">
+        <div class="form-tip-box">
+          <p>Поля со звёздочкой * — обязательные</p>
+          <p>Срок жизни объявления на сайте — 7 дней. Продлить можно в личном кабинете</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ШАГ 2: сама форма -->
 <div class="form-page" id="formPage">
   <div class="form-page-inner">
 
-    <button class="form-page-back" id="btnCancel">← Назад к объявлениям</button>
     <h1 class="form-page-title">Подать объявление</h1>
+    <div class="form-breadcrumb">
+      <span id="formBreadcrumb"></span>
+      <a href="#" id="btnCancel">Изменить</a>
+    </div>
 
     <div class="form-page-body">
       <div class="form-main">
 
         <!-- Скрытые поля — читаются при отправке -->
         <input type="hidden" id="f_deal" value="sale">
-        <input type="hidden" id="f_rooms" value="1">
-        <input type="hidden" id="f_houseType" value="монолитный">
-        <input type="hidden" id="f_condition" value="хорошее">
-        <input type="hidden" id="f_doorType" value="металлическая">
-        <input type="hidden" id="f_parking" value="нет">
-        <input type="hidden" id="f_balcony" value="нет">
+        <input type="hidden" id="f_pledged" value="">
+        <input type="hidden" id="f_houseType" value="">
+        <input type="hidden" id="f_exDormitory" value="">
+        <input type="hidden" id="f_condition" value="">
+        <input type="hidden" id="f_phoneLine" value="">
+        <input type="hidden" id="f_internet" value="">
+        <input type="hidden" id="f_bathroom" value="">
+        <input type="hidden" id="f_balcony" value="">
+        <input type="hidden" id="f_balconyGlazed" value="">
+        <input type="hidden" id="f_doorType" value="">
+        <input type="hidden" id="f_parking" value="">
+        <input type="hidden" id="f_furnished" value="">
+        <input type="hidden" id="f_floorType" value="">
         <input type="hidden" id="f_rentPeriod" value="month">
         <input type="hidden" id="f_isNew" value="false">
-        <input type="hidden" id="f_furnished" value="no">
         <input type="hidden" id="f_kids" value="false">
         <input type="hidden" id="f_pets" value="false">
+        <input type="hidden" id="f_exchange" value="false">
+        <input type="hidden" id="f_sellerType" value="owner">
+        <input type="hidden" id="f_lat" value="">
+        <input type="hidden" id="f_lng" value="">
 
         <!-- СЕКЦИЯ: Основное -->
         <div class="form-section">
           <h2 class="form-section-title">Основное</h2>
-
-          <div class="fp-field">
-            <label class="fp-label">Тип сделки</label>
-            <div class="toggle-group" data-field="f_deal">
-              <button class="toggle-btn on" data-val="sale">Продажа</button>
-              <button class="toggle-btn" data-val="rent">Аренда</button>
-            </div>
-          </div>
 
           <div class="fp-field" id="f_rentOnly" style="display:none">
             <label class="fp-label">Период аренды</label>
@@ -380,28 +408,39 @@
 
           <div class="fp-field">
             <label class="fp-label">Количество комнат *</label>
-            <div class="tag-group" data-field="f_rooms">
-              <button class="tag-btn on" data-val="1">1</button>
-              <button class="tag-btn" data-val="2">2</button>
-              <button class="tag-btn" data-val="3">3</button>
-              <button class="tag-btn" data-val="4">4</button>
-              <button class="tag-btn" data-val="5">5+</button>
+            <input type="number" id="f_rooms" placeholder="напр. 2" class="fp-input fp-input-sm">
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Цена * <span id="priceHint" style="color:#999;font-weight:400;font-size:13px"></span></label>
+            <div class="fp-inline">
+              <input type="number" id="f_price" placeholder="Например, 45 000 000" class="fp-input">
+              <span class="fp-sep">тенге</span>
             </div>
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Цена, ₸ * <span id="priceHint" style="color:#999;font-weight:400;font-size:13px"></span></label>
-            <input type="number" id="f_price" placeholder="Например, 45 000 000" class="fp-input">
+            <label class="fp-label">В залоге</label>
+            <div class="yn-link-group" data-field="f_pledged">
+              <button class="yn-link-btn" data-val="true">Да</button>
+              <button class="yn-link-btn on" data-val="false">Нет</button>
+            </div>
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Площадь, м² *</label>
-            <input type="number" id="f_area" placeholder="напр. 65" class="fp-input fp-input-sm">
+            <label class="fp-label">Тип строения</label>
+            <select id="f_houseTypeSelect" class="fp-input" data-hidden="f_houseType">
+              <option value="">—</option>
+              <option value="кирпичный">Кирпичный</option>
+              <option value="панельный">Панельный</option>
+              <option value="монолитный">Монолитный</option>
+              <option value="иной">Иной</option>
+            </select>
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Высота потолков, м</label>
-            <input type="number" step="0.1" id="f_ceilingHeight" placeholder="напр. 2.7" class="fp-input fp-input-sm">
+            <label class="fp-label">Год постройки (сдачи в эксплуатацию) *</label>
+            <input type="number" id="f_year" placeholder="напр. 2015" class="fp-input fp-input-sm">
           </div>
 
           <div class="fp-field">
@@ -414,89 +453,48 @@
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Тип строения</label>
-            <div class="tag-group" data-field="f_houseType">
-              <button class="tag-btn" data-val="кирпичный">Кирпичный</button>
-              <button class="tag-btn" data-val="панельный">Панельный</button>
-              <button class="tag-btn on" data-val="монолитный">Монолитный</button>
-              <button class="tag-btn" data-val="иной">Иной</button>
+            <label class="fp-label">Площадь, м²</label>
+            <div class="fp-inline">
+              <div>
+                <span class="fp-sublabel">Общая *</span>
+                <input type="number" id="f_area" placeholder="напр. 65" class="fp-input fp-input-sm">
+              </div>
+              <div>
+                <span class="fp-sublabel">Кухня</span>
+                <input type="number" id="f_kitchenArea" placeholder="напр. 10" class="fp-input fp-input-sm">
+              </div>
             </div>
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Год постройки</label>
-            <input type="number" id="f_year" placeholder="напр. 2015" class="fp-input fp-input-sm">
-          </div>
-
-          <div class="fp-field">
-            <label class="fp-label">Состояние</label>
-            <div class="tag-group" data-field="f_condition">
-              <button class="tag-btn" data-val="свежий ремонт">Свежий ремонт</button>
-              <button class="tag-btn on" data-val="хорошее">Хорошее</button>
-              <button class="tag-btn" data-val="требует ремонта">Требует ремонта</button>
-              <button class="tag-btn" data-val="черновая отделка">Черновая отделка</button>
-            </div>
-          </div>
-
-          <div class="fp-field">
-            <label class="fp-label">Дверь</label>
-            <div class="tag-group" data-field="f_doorType">
-              <button class="tag-btn on" data-val="металлическая">Металлическая</button>
-              <button class="tag-btn" data-val="деревянная">Деревянная</button>
-              <button class="tag-btn" data-val="бронированная">Бронированная</button>
-              <button class="tag-btn" data-val="иная">Иная</button>
-            </div>
-          </div>
-
-          <div class="fp-field">
-            <label class="fp-label">Парковка</label>
-            <div class="tag-group" data-field="f_parking">
-              <button class="tag-btn on" data-val="нет">Нет</button>
-              <button class="tag-btn" data-val="паркинг">Паркинг</button>
-              <button class="tag-btn" data-val="гараж">Гараж</button>
-              <button class="tag-btn" data-val="рядом с домом">Рядом с домом</button>
-            </div>
-          </div>
-
-          <div class="fp-field">
-            <label class="fp-label">Балкон</label>
-            <div class="tag-group" data-field="f_balcony">
-              <button class="tag-btn on" data-val="нет">Нет</button>
-              <button class="tag-btn" data-val="балкон">Балкон</button>
-              <button class="tag-btn" data-val="лоджия">Лоджия</button>
-            </div>
-          </div>
-
-          <div class="fp-field">
-            <label class="fp-label">Меблирована</label>
-            <div class="tag-group" data-field="f_furnished">
-              <button class="tag-btn" data-val="yes">Полностью</button>
-              <button class="tag-btn" data-val="partial">Частично</button>
-              <button class="tag-btn on" data-val="no">Без мебели</button>
+            <label class="fp-label">Бывшее общежитие</label>
+            <div class="yn-link-group" data-field="f_exDormitory">
+              <button class="yn-link-btn" data-val="true">Да</button>
+              <button class="yn-link-btn on" data-val="false">Нет</button>
             </div>
           </div>
 
           <div class="fp-field">
             <label class="fp-label">Новостройка</label>
-            <div class="yn-group" data-field="f_isNew">
-              <button class="yn-btn" data-val="true">Да</button>
-              <button class="yn-btn on" data-val="false">Нет</button>
+            <div class="yn-link-group" data-field="f_isNew">
+              <button class="yn-link-btn" data-val="true">Да</button>
+              <button class="yn-link-btn on" data-val="false">Нет</button>
             </div>
           </div>
 
           <div id="f_rentChecks" style="display:none">
             <div class="fp-field">
               <label class="fp-label">Можно с детьми</label>
-              <div class="yn-group" data-field="f_kids">
-                <button class="yn-btn" data-val="true">Да</button>
-                <button class="yn-btn on" data-val="false">Нет</button>
+              <div class="yn-link-group" data-field="f_kids">
+                <button class="yn-link-btn" data-val="true">Да</button>
+                <button class="yn-link-btn on" data-val="false">Нет</button>
               </div>
             </div>
             <div class="fp-field">
               <label class="fp-label">Можно с животными</label>
-              <div class="yn-group" data-field="f_pets">
-                <button class="yn-btn" data-val="true">Да</button>
-                <button class="yn-btn on" data-val="false">Нет</button>
+              <div class="yn-link-group" data-field="f_pets">
+                <button class="yn-link-btn" data-val="true">Да</button>
+                <button class="yn-link-btn on" data-val="false">Нет</button>
               </div>
             </div>
           </div>
@@ -514,12 +512,30 @@
             <select id="f_district" class="fp-input"></select>
           </div>
           <div class="fp-field">
-            <label class="fp-label">Улица *</label>
-            <input type="text" id="f_street" placeholder="напр. Абая" class="fp-input">
-          </div>
-          <div class="fp-field">
             <label class="fp-label">Жилой комплекс</label>
             <select id="f_complex" class="fp-input"><option value="">— не указан —</option></select>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Улица или микрорайон *</label>
+            <div class="fp-row-3">
+              <input type="text" id="f_street" placeholder="напр. Абая" class="fp-input">
+              <div>
+                <span class="fp-sublabel">№ дома *</span>
+                <input type="text" id="f_houseNumber" placeholder="напр. 12" class="fp-input">
+              </div>
+              <div>
+                <span class="fp-sublabel">Пересечение с</span>
+                <input type="text" id="f_crossStreet" placeholder="Находится возле …" class="fp-input">
+              </div>
+            </div>
+            <label class="check" style="margin-top:10px"><input type="checkbox" id="f_hideHouseNumber"> Скрыть номер дома</label>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Расположение на карте *</label>
+            <p class="fp-hint-text">Перетащи метку, чтобы точно указать дом</p>
+            <div id="f_map" class="fp-map"></div>
           </div>
         </div>
 
@@ -536,19 +552,202 @@
           <div id="f_photoPreview" class="fp-photo-preview"></div>
         </div>
 
+        <!-- СЕКЦИЯ: Характеристики -->
+        <div class="form-section">
+          <h2 class="form-section-title">Характеристики</h2>
+
+          <div class="fp-field">
+            <label class="fp-label">Состояние</label>
+            <div class="choice-group" data-field="f_condition">
+              <button class="choice-btn" data-val="свежий ремонт">Свежий ремонт</button>
+              <button class="choice-btn" data-val="не новый, но аккуратный ремонт">Не новый, но аккуратный ремонт</button>
+              <button class="choice-btn" data-val="требует ремонта">Требует ремонта</button>
+              <button class="choice-btn" data-val="свободная планировка">Свободная планировка</button>
+              <button class="choice-btn" data-val="черновая отделка">Черновая отделка</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Телефон</label>
+            <div class="choice-group" data-field="f_phoneLine">
+              <button class="choice-btn" data-val="отдельный">Отдельный</button>
+              <button class="choice-btn" data-val="блокиратор">Блокиратор</button>
+              <button class="choice-btn" data-val="есть возможность подключения">Есть возможность подключения</button>
+              <button class="choice-btn" data-val="нет">Нет</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Интернет</label>
+            <div class="choice-group" data-field="f_internet">
+              <button class="choice-btn" data-val="ADSL">ADSL</button>
+              <button class="choice-btn" data-val="через TV кабель">Через TV кабель</button>
+              <button class="choice-btn" data-val="проводной">Проводной</button>
+              <button class="choice-btn" data-val="оптика">Оптика</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Санузел</label>
+            <div class="choice-group" data-field="f_bathroom">
+              <button class="choice-btn" data-val="раздельный">Раздельный</button>
+              <button class="choice-btn" data-val="совмещённый">Совмещенный</button>
+              <button class="choice-btn" data-val="2 с/у и более">2 с/у и более</button>
+              <button class="choice-btn" data-val="нет">Нет</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Балкон</label>
+            <div class="choice-group" data-field="f_balcony">
+              <button class="choice-btn" data-val="балкон">Балкон</button>
+              <button class="choice-btn" data-val="лоджия">Лоджия</button>
+              <button class="choice-btn" data-val="балкон и лоджия">Балкон и лоджия</button>
+              <button class="choice-btn" data-val="несколько балконов или лоджий">Несколько балконов или лоджий</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Балкон остеклён</label>
+            <div class="yn-link-group" data-field="f_balconyGlazed">
+              <button class="yn-link-btn" data-val="false">Нет</button>
+              <button class="yn-link-btn" data-val="true">Да</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Дверь</label>
+            <div class="choice-group" data-field="f_doorType">
+              <button class="choice-btn" data-val="деревянная">Деревянная</button>
+              <button class="choice-btn" data-val="металлическая">Металлическая</button>
+              <button class="choice-btn" data-val="бронированная">Бронированная</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Парковка</label>
+            <div class="choice-group" data-field="f_parking">
+              <button class="choice-btn" data-val="паркинг">Паркинг</button>
+              <button class="choice-btn" data-val="гараж">Гараж</button>
+              <button class="choice-btn" data-val="рядом охраняемая стоянка">Рядом охраняемая стоянка</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Квартира меблирована</label>
+            <div class="choice-group" data-field="f_furnished">
+              <button class="choice-btn" data-val="yes">Полностью</button>
+              <button class="choice-btn" data-val="partial">Частично</button>
+              <button class="choice-btn" data-val="no">Без мебели</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Пол</label>
+            <div class="choice-group" data-field="f_floorType">
+              <button class="choice-btn" data-val="линолеум">Линолеум</button>
+              <button class="choice-btn" data-val="паркет">Паркет</button>
+              <button class="choice-btn" data-val="ламинат">Ламинат</button>
+              <button class="choice-btn" data-val="дерево">Дерево</button>
+              <button class="choice-btn" data-val="ковролан">Ковролан</button>
+              <button class="choice-btn" data-val="плитка">Плитка</button>
+              <button class="choice-btn" data-val="пробковый">Пробковый</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Высота потолков, м</label>
+            <input type="number" step="0.1" id="f_ceilingHeight" placeholder="напр. 2.7" class="fp-input fp-input-sm">
+          </div>
+        </div>
+
+        <!-- СЕКЦИЯ: Безопасность -->
+        <div class="form-section">
+          <h2 class="form-section-title">Безопасность</h2>
+          <div class="fp-check-grid">
+            <label class="check"><input type="checkbox" class="f_security" value="решетки на окнах"> Решетки на окнах</label>
+            <label class="check"><input type="checkbox" class="f_security" value="охрана"> Охрана</label>
+            <label class="check"><input type="checkbox" class="f_security" value="домофон"> Домофон</label>
+            <label class="check"><input type="checkbox" class="f_security" value="кодовый замок"> Кодовый замок</label>
+            <label class="check"><input type="checkbox" class="f_security" value="сигнализация"> Сигнализация</label>
+            <label class="check"><input type="checkbox" class="f_security" value="видеонаблюдение"> Видеонаблюдение</label>
+            <label class="check"><input type="checkbox" class="f_security" value="видеодомофон"> Видеодомофон</label>
+            <label class="check"><input type="checkbox" class="f_security" value="консьерж"> Консьерж</label>
+          </div>
+        </div>
+
+        <!-- СЕКЦИЯ: Разное -->
+        <div class="form-section">
+          <h2 class="form-section-title">Разное</h2>
+          <div class="fp-check-grid">
+            <label class="check"><input type="checkbox" class="f_feature" value="пластиковые окна"> Пластиковые окна</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="не угловая"> Не угловая</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="улучшенная"> Улучшенная</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="комнаты изолированы"> Комнаты изолированы</label>
+            <label class="check"><input type="checkbox" id="f_kitchenStudio"> Кухня-студия</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="встроенная кухня"> Встроенная кухня</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="новая сантехника"> Новая сантехника</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="кладовка"> Кладовка</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="счётчики"> Счётчики</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="тихий двор"> Тихий двор</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="кондиционер"> Кондиционер</label>
+            <label class="check"><input type="checkbox" class="f_feature" value="удобно под коммерцию"> Удобно под коммерцию</label>
+          </div>
+        </div>
+
         <!-- СЕКЦИЯ: Описание -->
         <div class="form-section">
           <h2 class="form-section-title">Текст объявления</h2>
-          <textarea id="f_desc" placeholder="Расскажи о квартире: ремонт, мебель, район, что рядом…" class="fp-textarea"></textarea>
+          <textarea id="f_desc" placeholder="Расскажи о квартире: ремонт, мебель, район, что рядом…" class="fp-textarea" maxlength="2000"></textarea>
+          <p class="fp-char-count"><span id="f_descCount">2000</span> символов осталось</p>
         </div>
 
         <!-- СЕКЦИЯ: Контакты -->
         <div class="form-section">
           <h2 class="form-section-title">Контактная информация</h2>
+
           <div class="fp-field">
-            <label class="fp-label">Телефон *</label>
-            <input type="text" id="f_phone" placeholder="+7 777 123 45 67" class="fp-input">
+            <label class="fp-label">От чьего имени вы хотите подавать объявления? *</label>
+            <div class="seller-type-cards" data-field="f_sellerType">
+              <button class="seller-type-card on" data-val="owner">
+                <span class="seller-type-name">Хозяин</span>
+                <span class="seller-type-desc">Для владельцев недвижимости</span>
+              </button>
+              <button class="seller-type-card" data-val="specialist">
+                <span class="seller-type-name">Специалист</span>
+                <span class="seller-type-desc">Для профессионалов</span>
+              </button>
+              <button class="seller-type-card" data-val="company">
+                <span class="seller-type-name">Компания</span>
+                <span class="seller-type-desc">Для агентств недвижимости</span>
+              </button>
+            </div>
           </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Имя в личных сообщениях *</label>
+            <input type="text" id="f_contactName" placeholder="напр. Айдос" class="fp-input">
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Возможен обмен</label>
+            <div class="yn-link-group" data-field="f_exchange">
+              <button class="yn-link-btn" data-val="true">Да</button>
+              <button class="yn-link-btn on" data-val="false">Нет</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Телефоны *</label>
+            <div id="f_phonesList">
+              <div class="fp-phone-row">
+                <input type="text" class="f_phone fp-input" placeholder="+7 777 123 45 67">
+              </div>
+            </div>
+            <a href="#" id="btnAddPhone" class="fp-add-phone">+ Добавить ещё телефоны</a>
+          </div>
+
+          <label class="check"><input type="checkbox" id="f_agree" checked> Согласен с правилами размещения объявлений</label>
         </div>
 
         <div class="fp-actions">
