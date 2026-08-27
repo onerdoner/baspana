@@ -331,6 +331,9 @@
         <input type="hidden" id="f_rooms" value="1">
         <input type="hidden" id="f_houseType" value="монолитный">
         <input type="hidden" id="f_condition" value="хорошее">
+        <input type="hidden" id="f_doorType" value="металлическая">
+        <input type="hidden" id="f_parking" value="нет">
+        <input type="hidden" id="f_balcony" value="нет">
         <input type="hidden" id="f_rentPeriod" value="month">
         <input type="hidden" id="f_isNew" value="false">
         <input type="hidden" id="f_furnished" value="no">
@@ -415,6 +418,35 @@
               <button class="tag-btn on" data-val="хорошее">Хорошее</button>
               <button class="tag-btn" data-val="требует ремонта">Требует ремонта</button>
               <button class="tag-btn" data-val="черновая отделка">Черновая отделка</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Дверь</label>
+            <div class="tag-group" data-field="f_doorType">
+              <button class="tag-btn on" data-val="металлическая">Металлическая</button>
+              <button class="tag-btn" data-val="деревянная">Деревянная</button>
+              <button class="tag-btn" data-val="бронированная">Бронированная</button>
+              <button class="tag-btn" data-val="иная">Иная</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Парковка</label>
+            <div class="tag-group" data-field="f_parking">
+              <button class="tag-btn on" data-val="нет">Нет</button>
+              <button class="tag-btn" data-val="паркинг">Паркинг</button>
+              <button class="tag-btn" data-val="гараж">Гараж</button>
+              <button class="tag-btn" data-val="рядом с домом">Рядом с домом</button>
+            </div>
+          </div>
+
+          <div class="fp-field">
+            <label class="fp-label">Балкон</label>
+            <div class="tag-group" data-field="f_balcony">
+              <button class="tag-btn on" data-val="нет">Нет</button>
+              <button class="tag-btn" data-val="балкон">Балкон</button>
+              <button class="tag-btn" data-val="лоджия">Лоджия</button>
             </div>
           </div>
 
@@ -585,9 +617,9 @@
         <div class="detail-photo" id="detailPhoto"></div>
         <div class="detail-thumbs" id="detailThumbs"></div>
         <div id="detailMap"></div>
+        <div class="detail-desc" id="detailDesc"></div>
       </div>
     </div>
-    <div class="detail-desc" id="detailDesc"></div>
     <div id="detailSimilar"></div>
   </div>
 </div>

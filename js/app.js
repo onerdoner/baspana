@@ -297,6 +297,7 @@ function rowToItem(row) {
     imageUrl: row.image_url, images: row.images || [], city: row.city || "Алматы",
     complex: row.complex, kitchenArea: row.kitchen_area, bathroom: row.bathroom,
     ceilingHeight: row.ceiling_height,
+    doorType: row.door_type, parking: row.parking, balcony: row.balcony,
     sellerType: row.seller_type, pledged: row.pledged,
     exDormitory: row.ex_dormitory, exchange: row.exchange,
     date: "18 августа", views: Math.floor(Math.random() * 300),
@@ -381,6 +382,9 @@ async function submitListing() {
   const houseType = document.getElementById("f_houseType").value;
   const yearBuilt = +document.getElementById("f_year").value || null;
   const condition = document.getElementById("f_condition").value;
+  const doorType = document.getElementById("f_doorType").value;
+  const parking = document.getElementById("f_parking").value;
+  const balcony = document.getElementById("f_balcony").value;
   const phone = document.getElementById("f_phone").value.trim();
   const description = document.getElementById("f_desc").value.trim();
   const isNew = document.getElementById("f_isNew").value === "true";
@@ -423,7 +427,7 @@ async function submitListing() {
     rooms, area, ceiling_height: ceilingHeight, floor, floors_total: floorsTotal, price,
     district, street, lat, lng, is_new: isNew, has_photo: images.length > 0, color,
     deal_type: dealType, house_type: houseType, year_built: yearBuilt,
-    condition, phone, description,
+    condition, door_type: doorType, parking, balcony, phone, description,
     rent_period: dealType === "rent" ? rentPeriod : "month",
     furnished, kids_allowed: kids, pets_allowed: pets,
     image_url: images[0] || null, images: images.length ? images : null, city, complex,
@@ -1033,9 +1037,14 @@ function renderListingContent(item) {
     <div class="attr"><span class="k">Тип дома</span><span class="v">${item.houseType || "—"}</span></div>
     ${item.complex ? `<div class="attr"><span class="k">Жилой комплекс</span><span class="v">${item.complex}</span></div>` : ""}
     <div class="attr"><span class="k">Год постройки</span><span class="v">${item.yearBuilt || "—"}</span></div>
+    <div class="attr"><span class="k">Этаж</span><span class="v">${item.floor} из ${item.floorsTotal}</span></div>
     <div class="attr"><span class="k">Площадь</span><span class="v">${item.area} м²</span></div>
+    <div class="attr"><span class="k">Состояние</span><span class="v">${item.condition || "—"}</span></div>
     ${item.bathroom ? `<div class="attr"><span class="k">Санузел</span><span class="v">${item.bathroom}</span></div>` : ""}
-    ${item.ceilingHeight ? `<div class="attr"><span class="k">Высота потолков</span><span class="v">${item.ceilingHeight} м</span></div>` : ""}`;
+    ${item.ceilingHeight ? `<div class="attr"><span class="k">Высота потолков</span><span class="v">${item.ceilingHeight} м</span></div>` : ""}
+    ${item.doorType ? `<div class="attr"><span class="k">Дверь</span><span class="v">${item.doorType}</span></div>` : ""}
+    ${item.parking ? `<div class="attr"><span class="k">Парковка</span><span class="v">${item.parking}</span></div>` : ""}
+    ${item.balcony ? `<div class="attr"><span class="k">Балкон</span><span class="v">${item.balcony}</span></div>` : ""}`;
 
   const photo = document.getElementById("detailPhoto");
   const thumbs = document.getElementById("detailThumbs");
