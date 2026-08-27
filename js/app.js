@@ -59,13 +59,16 @@ async function refreshAuth() {
 
 /* ИЗБРАННОЕ */
 let favoriteIds = new Set();   // id объявлений, которые лайкнул текущий пользователь
+let favoriteOrder = [];        // те же id, в порядке добавления — сначала последний добавленный
 let favMode = false;           // включён ли режим "показывать только избранное"
+let myMode = false;             // включён ли режим "Мои объявления" (Кабинет)
 
 async function loadFavorites() {
   favoriteIds = new Set();
+  favoriteOrder = [];
   if (currentUser) {
-    const { data, error } = await db.from("favorites").select("listing_id");
-    if (!error && data) data.forEach(r => favoriteIds.add(r.listing_id));
+    const { data, error } = await db.from("favorites").select("listing_id").order("created_at", { ascending: false });
+    if (!error && data) data.forEach(r => { favoriteIds.add(r.listing_id); favoriteOrder.push(r.listing_id); });
   }
   updateFavCount();
 }
@@ -80,6 +83,7 @@ async function toggleFavorite(id) {
     const { error } = await db.from("favorites").delete().eq("listing_id", id);
     if (error) { alert("Ошибка: " + error.message); return null; }
     favoriteIds.delete(id);
+    favoriteOrder = favoriteOrder.filter(x => x !== id);
     updateFavCount();
     if (favMode) update();       // в режиме избранного — пересобрать список
     return false;
@@ -87,9 +91,21 @@ async function toggleFavorite(id) {
     const { error } = await db.from("favorites").insert({ listing_id: id });
     if (error) { alert("Ошибка: " + error.message); return null; }
     favoriteIds.add(id);
+    favoriteOrder.unshift(id);
     updateFavCount();
     return true;
   }
+}
+// очистить всё избранное разом (кнопка "Очистить избранное")
+async function clearFavorites() {
+  if (!currentUser || !favoriteIds.size) return;
+  if (!confirm("Очистить всё избранное?")) return;
+  const { error } = await db.from("favorites").delete().eq("user_id", currentUser.id);
+  if (error) { alert("Ошибка: " + error.message); return; }
+  favoriteIds = new Set();
+  favoriteOrder = [];
+  updateFavCount();
+  if (favMode) update();
 }
 /* ЗАМЕТКИ */
 let notesMap = new Map();   // listing_id -> текст заметки (только у текущего пользователя)
@@ -113,7 +129,7 @@ async function saveNote(id, text) {
   notesMap.set(id, text);
   if (!favoriteIds.has(id)) {
     const { error: favError } = await db.from("favorites").insert({ listing_id: id });
-    if (!favError) { favoriteIds.add(id); updateFavCount(); }
+    if (!favError) { favoriteIds.add(id); favoriteOrder.unshift(id); updateFavCount(); }
   }
   return true;
 }
@@ -241,6 +257,7 @@ function renderAuthUI() {
     document.getElementById("menuCabinet").addEventListener("click", (e) => {
       e.preventDefault();
       menu.classList.remove("open");
+      showMyListings();
     });
     document.getElementById("menuLogout").addEventListener("click", (e) => {
       e.preventDefault();
@@ -287,7 +304,9 @@ async function logout() {
   await db.auth.signOut();
   currentUser = null; renderAuthUI();
   favMode = false;
+  myMode = false;
   document.getElementById("navFav").classList.remove("active");
+  syncModeUI();
   await loadFavorites();
   await loadNotes();
   if (currentView === "search") applyNow();
@@ -335,6 +354,11 @@ function buildQuery(query) {
   if (favMode) {
     const ids = [...favoriteIds];
     return query.in("id", ids.length ? ids : [-1]);   // -1 = ничего не найдётся
+  }
+  // режим "Мои объявления" (Кабинет) — все объявления текущего пользователя,
+  // независимо от типа сделки и остальных фильтров
+  if (myMode) {
+    return currentUser ? query.eq("user_id", currentUser.id) : query.eq("id", -1);
   }
   const f = getFilters();
   query = query.eq("deal_type", f.deal);
@@ -435,7 +459,7 @@ async function submitListing() {
   const description = document.getElementById("f_desc").value.trim();
 
   const sellerType = document.getElementById("f_sellerType").value;
-  const contactName = document.getElementById("f_contactName").value.trim();
+  const contactName = document.getElementById("f_contactName").value.trim() || (currentUser.email || "").split("@")[0];
   const exchange = document.getElementById("f_exchange").value === "true";
   const phones = Array.from(document.querySelectorAll(".f_phone")).map(i => i.value.trim()).filter(Boolean);
   const agree = document.getElementById("f_agree").checked;
@@ -444,9 +468,13 @@ async function submitListing() {
   const kids = document.getElementById("f_kids").value === "true";
   const pets = document.getElementById("f_pets").value === "true";
 
-  if (!rooms || !price || !yearBuilt || !area || !street || !houseNumber || !contactName || !phones.length) {
-    msg.className = "form-msg err"; msg.textContent = "Заполни все обязательные поля (отмечены звёздочкой)."; return;
+  const missing = validateRequiredFields();
+  if (missing.length) {
+    showFormToast(missing);
+    document.querySelector("#formPage .fp-field.has-error")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
   }
+  showFormToast([]);
   if (!agree) {
     msg.className = "form-msg err"; msg.textContent = "Нужно согласиться с правилами размещения объявлений."; return;
   }
@@ -609,10 +637,24 @@ function renderList(items, total) {
   const grid = document.getElementById("listGrid");
   const cityName = document.getElementById("city").value;
   const dealLabel = activeDeal === "sale" ? "Продажа" : "Аренда";
-  document.getElementById("listTitle").textContent = `${dealLabel} квартир в ${cityName}`;
-  document.getElementById("listCount").textContent = "Найдено " + total.toLocaleString("ru-RU").replace(/,/g, " ") + " объявлений";
+  document.getElementById("listTitle").textContent = myMode ? "Мои объявления" : favMode ? "Избранное" : `${dealLabel} квартир в ${cityName}`;
+  document.getElementById("listCount").textContent = (myMode || favMode) ? "" : "Найдено " + total.toLocaleString("ru-RU").replace(/,/g, " ") + " объявлений";
   if (!items.length) {
-    grid.innerHTML = '<div class="empty">Ничего не найдено. Попробуйте изменить фильтры.</div>';
+    grid.innerHTML = myMode
+      ? `<div class="empty-mine">
+           <div class="empty-mine-row">
+             <div class="empty-mine-text">У вас пока нет объявлений на сайте</div>
+             <button class="btn-add" id="emptyMineSubmit">Подать объявление</button>
+           </div>
+           <p class="empty-mine-hint">Это легко исправить, <a href="#" id="emptyMineLink">подав их</a>.</p>
+         </div>`
+      : favMode
+        ? '<div class="empty">Вы пока не добавили ни одного объявления в избранное.</div>'
+        : '<div class="empty">Ничего не найдено. Попробуйте изменить фильтры.</div>';
+    if (myMode) {
+      document.getElementById("emptyMineSubmit").addEventListener("click", openFormCategory);
+      document.getElementById("emptyMineLink").addEventListener("click", (e) => { e.preventDefault(); openFormCategory(); });
+    }
     return;
   }
   grid.innerHTML = items.map(item => {
@@ -747,15 +789,27 @@ async function update() {
       </div>
     </div>`).join("");
 
-  // select с count:"exact" — база вернёт и данные, и общее число найденных
-  let query = buildQuery(db.from("listings").select("*", { count: "exact" }));
-  query = applySort(query).range(from, to);
+  let items, count;
+  if (favMode) {
+    // в избранном сортируем не по базе, а по порядку добавления в избранное
+    // (последний добавленный — первый), поэтому забираем все и режем страницу сами
+    const { data, error } = await buildQuery(db.from("listings").select("*"));
+    if (error) { showBanner("Ошибка запроса: " + error.message); return; }
+    const all = (data || []).map(rowToItem)
+      .sort((a, b) => favoriteOrder.indexOf(a.id) - favoriteOrder.indexOf(b.id));
+    count = all.length;
+    items = all.slice(from, to + 1);
+  } else {
+    // select с count:"exact" — база вернёт и данные, и общее число найденных
+    let query = buildQuery(db.from("listings").select("*", { count: "exact" }));
+    query = applySort(query).range(from, to);
+    const { data, error, count: c } = await query;
+    if (error) { showBanner("Ошибка запроса: " + error.message); return; }
+    count = c || 0;
+    items = (data || []).map(rowToItem);
+  }
 
-  const { data, error, count } = await query;
-  if (error) { showBanner("Ошибка запроса: " + error.message); return; }
-
-  totalCount = count || 0;
-  const items = (data || []).map(rowToItem);
+  totalCount = count;
   renderList(items, totalCount);
   renderMarkers(items);          // на карте — только текущая страница
   renderPager(totalCount);
@@ -975,7 +1029,7 @@ function deserializeFilters(p) {
   document.getElementById("onlyNew").checked = p.get("new") === "1";
   document.getElementById("onlyOwner").checked = p.get("owner") === "1";
   document.getElementById("onlyAgency").checked = p.get("agency") === "1";
-  document.getElementById("rentPeriod").value = p.get("rp") || "any";
+  document.getElementById("rentPeriod").value = p.get("rp") || "month";
   document.getElementById("furnished").value = p.get("furn") || "any";
   document.getElementById("fKids").checked = p.get("kids") === "1";
   document.getElementById("fPets").checked = p.get("pets") === "1";
@@ -1107,7 +1161,7 @@ function renderListingContent(item) {
     <div class="attr"><span class="k">Площадь</span><span class="v">${item.area} м²</span></div>
     ${item.kitchenStudio != null ? `<div class="attr"><span class="k">Кухня студия</span><span class="v">${item.kitchenStudio ? "да" : "нет"}</span></div>` : ""}
     <div class="attr"><span class="k">Состояние</span><span class="v">${item.condition || "—"}</span></div>
-    ${item.furnished != null ? `<div class="attr"><span class="k">Квартира меблирована</span><span class="v">${item.furnished ? "да" : "нет"}</span></div>` : ""}
+    ${item.furnished != null ? `<div class="attr"><span class="k">Квартира мебелирована</span><span class="v">${item.furnished ? "да" : "нет"}</span></div>` : ""}
     ${item.security ? `<div class="attr"><span class="k">Безопасность</span><span class="v">${item.security}</span></div>` : ""}
     ${item.exDormitory != null ? `<div class="attr"><span class="k">Бывшее общежитие</span><span class="v">${item.exDormitory ? "да" : "нет"}</span></div>` : ""}
   ` : `
@@ -1196,6 +1250,10 @@ function showListingSection() {
   document.getElementById("hotSection").style.display = "none";
   document.getElementById("searchContent").style.display = "none";
   document.getElementById("detail").classList.add("open");
+  // на странице отдельного объявления мы не на Продаже/Аренде/Избранном — снимаем подсветку
+  document.getElementById("navSale").classList.remove("active");
+  document.getElementById("navRent").classList.remove("active");
+  document.getElementById("navFav").classList.remove("active");
 }
 
 // переход на другое объявление той же вкладкой (напр. клик по "похожему") —
@@ -1331,7 +1389,9 @@ function applyDealVisibility(d) {
 function setDeal(d) {
   activeDeal = d;
   favMode = false;
+  myMode = false;
   document.getElementById("navFav").classList.remove("active");
+  syncModeUI();
   document.querySelectorAll("#deal button").forEach(b => b.classList.toggle("on", b.dataset.d === d));
   document.getElementById("navSale").classList.toggle("active", d === "sale");
   document.getElementById("navRent").classList.toggle("active", d === "rent");
@@ -1371,6 +1431,10 @@ function hideOtherSections() {
   document.getElementById("hotSection").style.display = "none";
   document.getElementById("searchContent").style.display = "none";
   document.getElementById("detail").classList.remove("open");
+  // на форме подачи объявления мы не на Продаже/Аренде/Избранном — снимаем подсветку
+  document.getElementById("navSale").classList.remove("active");
+  document.getElementById("navRent").classList.remove("active");
+  document.getElementById("navFav").classList.remove("active");
 }
 
 function openFormCategory() {
@@ -1435,7 +1499,69 @@ function resetFormFields() {
   document.getElementById("f_photo").value = "";
   document.getElementById("f_descCount").textContent = "2000";
   document.getElementById("f_phonesList").innerHTML = '<div class="fp-phone-row"><input type="text" class="f_phone fp-input" placeholder="+7 777 123 45 67"></div>';
+  watchPhoneInput(document.querySelector(".f_phone"));
+  document.querySelectorAll("#formPage .fp-field.has-error").forEach(f => f.classList.remove("has-error"));
+  showFormToast([]);
 }
+
+// обязательные поля страницы "Продать квартиру" — как у krisha.kz:
+// подсвечиваем каждое пустое поле красным + текст ошибки под ним,
+// и собираем список для тёмного попапа в углу
+const REQUIRED_FIELDS = [
+  { id: "f_rooms", label: "Количество комнат", check: () => +document.getElementById("f_rooms").value > 0, message: "Обязательное поле" },
+  { id: "f_price", label: "Цена", check: () => +document.getElementById("f_price").value > 0, message: "Введите цену, например, 12 000 000 ₸" },
+  { id: "f_year", label: "Год постройки (сдачи в эксплуатацию)", check: () => +document.getElementById("f_year").value > 0, message: "Обязательное поле" },
+  { id: "f_area", label: "Общая площадь", check: () => +document.getElementById("f_area").value > 0, message: "Обязательное поле" },
+  { id: "f_floor", label: "Этаж", check: () => +document.getElementById("f_floor").value > 0 && +document.getElementById("f_floorsTotal").value > 0, message: "Обязательное поле" },
+  { id: "f_street", label: "Улица или микрорайон", check: () => document.getElementById("f_street").value.trim().length > 0, message: "Обязательное поле" },
+  { id: "f_houseNumber", label: "№ дома", check: () => document.getElementById("f_houseNumber").value.trim().length > 0, message: "Обязательное поле" },
+  { id: "fieldPhones", label: "Телефоны", check: () => Array.from(document.querySelectorAll(".f_phone")).some(i => i.value.trim()), message: "Укажите хотя бы один телефон" },
+];
+function fieldWrapper(id) {
+  const el = document.getElementById(id);
+  return el.classList.contains("fp-field") ? el : el.closest(".fp-field");
+}
+function setFieldError(id, message) {
+  const field = fieldWrapper(id);
+  let err = field.querySelector(".fp-error");
+  if (message) {
+    if (!err) { err = document.createElement("div"); err.className = "fp-error"; field.appendChild(err); }
+    err.textContent = message;
+    field.classList.add("has-error");
+  } else {
+    field.classList.remove("has-error");
+  }
+}
+function validateRequiredFields() {
+  const missing = [];
+  REQUIRED_FIELDS.forEach(f => {
+    const ok = f.check();
+    setFieldError(f.id, ok ? "" : f.message);
+    if (!ok) missing.push(f.label);
+  });
+  return missing;
+}
+function showFormToast(missing) {
+  const toast = document.getElementById("formToast");
+  clearTimeout(showFormToast._timer);
+  if (!missing.length) { toast.style.display = "none"; return; }
+  document.getElementById("formToastList").innerHTML = missing.map(m => `<li>${m}</li>`).join("");
+  toast.style.display = "flex";
+  showFormToast._timer = setTimeout(() => { toast.style.display = "none"; }, 6000);
+}
+// снимаем подсветку с поля, как только его исправили
+// (для "Этаж" слушаем оба инпута — этаж и этажей в доме)
+REQUIRED_FIELDS.forEach(f => {
+  const el = document.getElementById(f.id);
+  if (el.classList.contains("fp-field")) return;
+  fieldWrapper(f.id).querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("input", () => { if (f.check()) setFieldError(f.id, ""); });
+  });
+});
+function watchPhoneInput(inp) {
+  inp.addEventListener("input", () => { if (REQUIRED_FIELDS.find(f => f.id === "fieldPhones").check()) setFieldError("fieldPhones", ""); });
+}
+
 function openAuth(hint) {
   document.getElementById("authMsg").textContent = "";
   document.getElementById("authSub").textContent = hint || "Войди или создай аккаунт, чтобы подавать объявления.";
@@ -1496,14 +1622,19 @@ document.getElementById("f_desc").addEventListener("input", (e) => {
 });
 
 // "+ Добавить ещё телефоны"
+watchPhoneInput(document.querySelector(".f_phone"));
 document.getElementById("btnAddPhone").addEventListener("click", (e) => {
   e.preventDefault();
   const row = document.createElement("div");
   row.className = "fp-phone-row";
   row.innerHTML = `<input type="text" class="f_phone fp-input" placeholder="+7 777 123 45 67"><button type="button" class="fp-phone-remove">✕</button>`;
   row.querySelector(".fp-phone-remove").addEventListener("click", () => row.remove());
+  watchPhoneInput(row.querySelector(".f_phone"));
   document.getElementById("f_phonesList").appendChild(row);
 });
+
+// "Предварительный просмотр" — пока без логики
+document.getElementById("btnPreview").addEventListener("click", (e) => { e.preventDefault(); });
 
 // Карта выбора расположения — перетаскиваемая метка вместо случайных координат
 let formMap = null, formMarker = null;
@@ -1534,6 +1665,15 @@ document.addEventListener("click", (e) => {
   if (menu && !menu.contains(e.target)) menu.classList.remove("open");
 });
 
+// показывает/прячет жёлтую панель фильтров, сорт-бар и элементы "Избранного"
+// в зависимости от текущего режима (обычный поиск / Избранное / Мои объявления)
+function syncModeUI() {
+  document.querySelector(".filters").style.display = (favMode || myMode) ? "none" : "";
+  document.getElementById("sortBar").style.display = (favMode || myMode) ? "none" : "";
+  document.getElementById("btnClearFav").style.display = favMode ? "" : "none";
+  document.getElementById("favTabs").style.display = favMode ? "" : "none";
+}
+
 /* КНОПКИ И ПОЛЯ */
 document.querySelectorAll("#deal button").forEach(btn => btn.addEventListener("click", () => setDeal(btn.dataset.d)));
 document.getElementById("navSale").addEventListener("click", () => { setDeal("sale"); showHomeView(); });
@@ -1541,12 +1681,35 @@ document.getElementById("navRent").addEventListener("click", () => { setDeal("re
 document.getElementById("navFav").addEventListener("click", () => {
   if (!currentUser) { openAuth("Войди, чтобы смотреть избранное."); return; }
   favMode = !favMode;
+  myMode = false;
   document.getElementById("navFav").classList.toggle("active", favMode);
   document.getElementById("navSale").classList.toggle("active", !favMode && activeDeal === "sale");
   document.getElementById("navRent").classList.toggle("active", !favMode && activeDeal === "rent");
   if (currentView === "search") { showList(); applyNow(); }
   else navigateToSearch(false);
+  syncModeUI();
 });
+document.getElementById("btnClearFav").addEventListener("click", clearFavorites);
+document.querySelectorAll("#favTabs .fav-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("#favTabs .fav-tab").forEach(b => b.classList.toggle("on", b === btn));
+  });
+});
+
+// "Кабинет" — показывает объявления текущего пользователя (в стиле "Избранное",
+// но без своего переключателя в шапке — открывается только из меню профиля)
+function showMyListings() {
+  if (!currentUser) { openAuth("Войди, чтобы смотреть свои объявления."); return; }
+  favMode = false;
+  myMode = true;
+  document.getElementById("navFav").classList.remove("active");
+  document.getElementById("navSale").classList.remove("active");
+  document.getElementById("navRent").classList.remove("active");
+  // showSearchView()/showList() сами возвращают панель фильтров видимой — прячем её после них
+  if (currentView === "search") { showList(); applyNow(); }
+  else navigateToSearch(false);
+  syncModeUI();
+}
 document.getElementById("logo").addEventListener("click", () => {
   if (currentView === "listing") {
     location.href = location.pathname;
@@ -1647,7 +1810,7 @@ document.getElementById("btnClear").addEventListener("click", () => {
    "floorsFrom","floorsTo","kitchenFrom","kitchenTo","yearFrom","yearTo"].forEach(id => document.getElementById(id).value = "");
   ["houseType","bathroom","complex"].forEach(id => document.getElementById(id).value = "");
   ["onlyPhoto","onlyNew","onlyOwner","onlyAgency","onlyMine","fPets","fKids","noFirst","noLast","exchange"].forEach(id => document.getElementById(id).checked = false);
-  document.getElementById("rentPeriod").value = "any";
+  document.getElementById("rentPeriod").value = "month";
   document.getElementById("furnished").value = "any";
   document.getElementById("pledged").value = "";
   document.getElementById("exDormitory").value = "";

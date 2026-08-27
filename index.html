@@ -70,7 +70,6 @@
         <!-- Только аренда: период -->
         <span id="rentOnly" style="display:none">
           <select id="rentPeriod">
-            <option value="any">Период</option>
             <option value="month">Помесячно</option>
             <option value="day">Посуточно</option>
             <option value="hour">По часам</option>
@@ -178,13 +177,13 @@
 
       </div><!-- /filter-grid-3col -->
 
-      <!-- Сетка для Аренды: ЖК+Площадь / Этаж+чекбоксы / Меблирована+животные+дети (см. setDeal) -->
+      <!-- Сетка для Аренды: ЖК+Площадь / Этаж+чекбоксы / Мебелирована+животные+дети (см. setDeal) -->
       <div class="filter-grid-3col" id="filterExtendedRent" style="display:none">
         <div class="fg-col" id="rentCol1"></div>
         <div class="fg-col" id="rentCol2"></div>
         <div class="fg-col" id="rentCol3">
           <div class="fg-row">
-            <span class="fg-label">Квартира меблирована</span>
+            <span class="fg-label">Квартира мебелирована</span>
             <select id="furnished" class="fg-select">
               <option value="any">не важно</option>
               <option value="yes">да</option>
@@ -320,8 +319,15 @@
 <div class="content" id="searchContent" style="display:none">
   <div id="map"></div>
   <div class="list">
-    <div class="list-title" id="listTitle"></div>
+    <div class="list-title-row">
+      <div class="list-title" id="listTitle"></div>
+      <button class="btn-clear-fav" id="btnClearFav" style="display:none">Очистить избранное</button>
+    </div>
     <div class="list-count" id="listCount">Загружаю объявления…</div>
+    <div class="fav-tabs" id="favTabs" style="display:none">
+      <button class="fav-tab on" data-favtab="ads">Объявления</button>
+      <button class="fav-tab" data-favtab="complexes">ЖК</button>
+    </div>
     <div class="sort-bar" id="sortBar">
       Сначала:
       <button data-sort="new" class="on">Новые</button>
@@ -407,12 +413,12 @@
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Количество комнат *</label>
+            <label class="fp-label">Количество комнат <span class="required-star">*</span></label>
             <input type="number" id="f_rooms" placeholder="напр. 2" class="fp-input fp-input-sm">
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Цена * <span id="priceHint" style="color:#999;font-weight:400;font-size:13px"></span></label>
+            <label class="fp-label">Цена <span class="required-star">*</span> <span id="priceHint" style="color:#999;font-weight:400;font-size:13px"></span></label>
             <div class="fp-inline">
               <input type="number" id="f_price" placeholder="Например, 45 000 000" class="fp-input">
               <span class="fp-sep">тенге</span>
@@ -439,12 +445,12 @@
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Год постройки (сдачи в эксплуатацию) *</label>
+            <label class="fp-label">Год постройки (сдачи в эксплуатацию) <span class="required-star">*</span></label>
             <input type="number" id="f_year" placeholder="напр. 2015" class="fp-input fp-input-sm">
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Этаж</label>
+            <label class="fp-label">Этаж <span class="required-star">*</span></label>
             <div class="fp-inline">
               <input type="number" id="f_floor" placeholder="этаж" class="fp-input fp-input-sm">
               <span class="fp-sep">из</span>
@@ -456,7 +462,7 @@
             <label class="fp-label">Площадь, м²</label>
             <div class="fp-inline">
               <div>
-                <span class="fp-sublabel">Общая *</span>
+                <span class="fp-sublabel">Общая <span class="required-star">*</span></span>
                 <input type="number" id="f_area" placeholder="напр. 65" class="fp-input fp-input-sm">
               </div>
               <div>
@@ -504,11 +510,11 @@
         <div class="form-section">
           <h2 class="form-section-title">Расположение</h2>
           <div class="fp-field">
-            <label class="fp-label">Город *</label>
+            <label class="fp-label">Город <span class="required-star">*</span></label>
             <select id="f_city" class="fp-input"></select>
           </div>
           <div class="fp-field">
-            <label class="fp-label">Район *</label>
+            <label class="fp-label">Район <span class="required-star">*</span></label>
             <select id="f_district" class="fp-input"></select>
           </div>
           <div class="fp-field">
@@ -517,11 +523,11 @@
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Улица или микрорайон *</label>
+            <label class="fp-label">Улица или микрорайон <span class="required-star">*</span></label>
             <div class="fp-row-3">
               <input type="text" id="f_street" placeholder="напр. Абая" class="fp-input">
               <div>
-                <span class="fp-sublabel">№ дома *</span>
+                <span class="fp-sublabel">№ дома <span class="required-star">*</span></span>
                 <input type="text" id="f_houseNumber" placeholder="напр. 12" class="fp-input">
               </div>
               <div>
@@ -533,7 +539,7 @@
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Расположение на карте *</label>
+            <label class="fp-label">Расположение на карте <span class="required-star">*</span></label>
             <p class="fp-hint-text">Перетащи метку, чтобы точно указать дом</p>
             <div id="f_map" class="fp-map"></div>
           </div>
@@ -634,7 +640,7 @@
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Квартира меблирована</label>
+            <label class="fp-label">Квартира мебелирована</label>
             <div class="choice-group" data-field="f_furnished">
               <button class="choice-btn" data-val="yes">Полностью</button>
               <button class="choice-btn" data-val="partial">Частично</button>
@@ -707,7 +713,7 @@
           <h2 class="form-section-title">Контактная информация</h2>
 
           <div class="fp-field">
-            <label class="fp-label">От чьего имени вы хотите подавать объявления? *</label>
+            <label class="fp-label">От чьего имени вы хотите подавать объявления? <span class="required-star">*</span></label>
             <div class="seller-type-cards" data-field="f_sellerType">
               <button class="seller-type-card on" data-val="owner">
                 <span class="seller-type-name">Хозяин</span>
@@ -725,7 +731,7 @@
           </div>
 
           <div class="fp-field">
-            <label class="fp-label">Имя в личных сообщениях *</label>
+            <label class="fp-label">Имя в личных сообщениях <span class="required-star">*</span></label>
             <input type="text" id="f_contactName" placeholder="напр. Айдос" class="fp-input">
           </div>
 
@@ -737,8 +743,8 @@
             </div>
           </div>
 
-          <div class="fp-field">
-            <label class="fp-label">Телефоны *</label>
+          <div class="fp-field" id="fieldPhones">
+            <label class="fp-label">Телефоны <span class="required-star">*</span></label>
             <div id="f_phonesList">
               <div class="fp-phone-row">
                 <input type="text" class="f_phone fp-input" placeholder="+7 777 123 45 67">
@@ -752,6 +758,7 @@
 
         <div class="fp-actions">
           <button class="fp-btn-submit" id="btnSubmit">Опубликовать</button>
+          <button class="fp-btn-preview" id="btnPreview" type="button">Предварительный просмотр</button>
         </div>
         <div class="form-msg" id="formMsg"></div>
 
@@ -837,6 +844,15 @@
       </div>
     </div>
     <div id="detailSimilar"></div>
+  </div>
+</div>
+
+<!-- Попап "Заполните обязательные поля" — форма подачи объявления -->
+<div class="form-toast" id="formToast" style="display:none">
+  <div class="form-toast-icon">!</div>
+  <div>
+    <div class="form-toast-title">Заполните обязательные поля:</div>
+    <ul class="form-toast-list" id="formToastList"></ul>
   </div>
 </div>
 

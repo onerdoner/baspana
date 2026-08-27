@@ -80,7 +80,13 @@
   body.list-only .list { flex: 1; max-width: 100%; overflow-y: visible; background: transparent; border: none; padding: 16px 15px 40px; }
   .list { width: 420px; overflow-y: auto; background: var(--bg-secondary); border-left: 1px solid var(--border); padding: 16px; }
   .list-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+  .list-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .list-title-row .list-title { margin-bottom: 4px; }
+  .btn-clear-fav { background: none; border: none; color: var(--blue); font-size: 14px; cursor: pointer; padding: 0; white-space: nowrap; }
   .list-count { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+  .fav-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .fav-tab { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; color: var(--text); }
+  .fav-tab.on { border-color: var(--blue); color: var(--blue); background: #eaf2fd; }
   .list-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 
   /* Карточки в режиме карты — горизонтальные (в узкой боковой панели) */
@@ -120,6 +126,13 @@
   body.list-only .card .card-actions { margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
   .price-pin { background: #fff; border: 1.5px solid var(--blue); color: var(--blue); font-weight: 700; font-size: 13px; padding: 5px 9px; border-radius: 16px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
   .empty { color: #999; text-align: center; padding: 40px 20px; }
+
+  /* "Мои объявления" — пусто (Кабинет) */
+  .empty-mine { padding: 12px 0; }
+  .empty-mine-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .empty-mine-text { font-size: 20px; font-weight: 700; color: var(--text); }
+  .empty-mine-hint { font-size: 14px; color: var(--text-muted); margin-top: 14px; }
+  .empty-mine-hint a { color: var(--blue); }
   .banner { background: #ffe1e1; color: var(--red); padding: 12px 24px; font-size: 13px; display: none; }
 
   /* Форма подачи — полная страница */
@@ -224,13 +237,27 @@
   .fp-photo-preview img { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #e5e5e5; }
 
   /* Кнопка отправки */
-  .fp-actions { margin-top: 8px; }
-  .fp-btn-submit { width: 100%; background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .15s; }
+  .fp-actions { margin-top: 8px; display: flex; align-items: center; gap: 20px; }
+  .fp-btn-submit { flex: 1; background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .15s; }
   .fp-btn-submit:hover { background: var(--blue-dark); }
   .fp-btn-submit:disabled { background: #9db8d6; cursor: default; }
+  .fp-btn-preview { background: none; border: none; color: var(--blue); font-size: 14px; cursor: pointer; white-space: nowrap; }
+  .fp-btn-preview:hover { text-decoration: underline; }
   .form-msg { font-size: 14px; margin-top: 14px; min-height: 18px; }
   .form-msg.ok { color: var(--green); }
   .form-msg.err { color: var(--red); }
+
+  /* Обязательные поля: звёздочка, ошибка под полем, подсветка рамки */
+  .required-star { color: var(--red); }
+  .fp-error { color: var(--red); font-size: 13px; margin-top: 6px; }
+  .fp-field.has-error .fp-input, .fp-field.has-error input, .fp-field.has-error select { border-color: var(--red); }
+
+  /* Тёмный попап "Заполните обязательные поля" — низ правого угла */
+  .form-toast { position: fixed; right: 24px; bottom: 24px; max-width: 320px; background: #2b2b2e; color: #fff; border-radius: 10px; padding: 16px 18px; display: flex; gap: 12px; z-index: 3000; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .form-toast-icon { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #ffcc00; color: #2b2b2e; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .form-toast-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .form-toast-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .form-toast-list li { font-size: 13px; color: #c9c9cf; }
 
   /* Окно входа / регистрации (остаётся модалкой) */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; z-index: 2000; }
