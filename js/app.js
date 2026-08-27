@@ -298,6 +298,7 @@ function rowToItem(row) {
     complex: row.complex, kitchenArea: row.kitchen_area, bathroom: row.bathroom,
     ceilingHeight: row.ceiling_height,
     doorType: row.door_type, parking: row.parking, balcony: row.balcony,
+    kitchenStudio: row.kitchen_studio, security: row.security,
     sellerType: row.seller_type, pledged: row.pledged,
     exDormitory: row.ex_dormitory, exchange: row.exchange,
     date: "18 августа", views: Math.floor(Math.random() * 300),
@@ -1034,7 +1035,18 @@ function renderListingContent(item) {
     e.currentTarget.textContent = favBtnLabel(state);
   });
 
-  document.getElementById("detailInfo").innerHTML = `
+  document.getElementById("detailInfo").innerHTML = item.dealType === "rent" ? `
+    <div class="attr"><span class="k">Город</span><span class="v">${item.city}, ${item.district} р-н</span></div>
+    ${item.complex ? `<div class="attr"><span class="k">Жилой комплекс</span><span class="v">${item.complex}</span></div>` : ""}
+    <div class="attr"><span class="k">Год постройки</span><span class="v">${item.yearBuilt || "—"}</span></div>
+    <div class="attr"><span class="k">Этаж</span><span class="v">${item.floor} из ${item.floorsTotal}</span></div>
+    <div class="attr"><span class="k">Площадь</span><span class="v">${item.area} м²</span></div>
+    ${item.kitchenStudio != null ? `<div class="attr"><span class="k">Кухня студия</span><span class="v">${item.kitchenStudio ? "да" : "нет"}</span></div>` : ""}
+    <div class="attr"><span class="k">Состояние</span><span class="v">${item.condition || "—"}</span></div>
+    ${item.furnished != null ? `<div class="attr"><span class="k">Квартира меблирована</span><span class="v">${item.furnished ? "да" : "нет"}</span></div>` : ""}
+    ${item.security ? `<div class="attr"><span class="k">Безопасность</span><span class="v">${item.security}</span></div>` : ""}
+    ${item.exDormitory != null ? `<div class="attr"><span class="k">Бывшее общежитие</span><span class="v">${item.exDormitory ? "да" : "нет"}</span></div>` : ""}
+  ` : `
     <div class="attr"><span class="k">Город</span><span class="v">${item.city}, ${item.district} р-н</span></div>
     <div class="attr"><span class="k">Тип дома</span><span class="v">${item.houseType || "—"}</span></div>
     ${item.complex ? `<div class="attr"><span class="k">Жилой комплекс</span><span class="v">${item.complex}</span></div>` : ""}
@@ -1342,8 +1354,8 @@ document.getElementById("f_photo").addEventListener("change", () => {
 
 /* КНОПКИ И ПОЛЯ */
 document.querySelectorAll("#deal button").forEach(btn => btn.addEventListener("click", () => setDeal(btn.dataset.d)));
-document.getElementById("navSale").addEventListener("click", () => setDeal("sale"));
-document.getElementById("navRent").addEventListener("click", () => setDeal("rent"));
+document.getElementById("navSale").addEventListener("click", () => { setDeal("sale"); showHomeView(); });
+document.getElementById("navRent").addEventListener("click", () => { setDeal("rent"); showHomeView(); });
 document.getElementById("navFav").addEventListener("click", () => {
   if (!currentUser) { openAuth("Войди, чтобы смотреть избранное."); return; }
   favMode = !favMode;
