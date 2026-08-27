@@ -23,6 +23,16 @@
   header .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
   .btn-add { background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .btn-add:hover { filter: brightness(.92); }
+
+  /* Меню "Личный кабинет" в шапке */
+  .account-menu { position: relative; }
+  .account-trigger { background: none; border: none; color: var(--red); font-size: 15px; font-weight: 600; cursor: pointer; padding: 6px 2px; display: flex; align-items: center; gap: 4px; }
+  .account-caret { font-size: 11px; }
+  .account-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); min-width: 180px; padding: 6px 0; z-index: 100; flex-direction: column; }
+  .account-menu.open .account-dropdown { display: flex; }
+  .account-item { padding: 10px 18px; font-size: 14px; color: var(--blue); }
+  .account-item:hover { background: var(--bg-secondary); }
+  .account-item-logout { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 12px; }
   .filters { background: transparent; padding: 12px 15px; }
   .filters .container {
     border: 1px solid #e8d49a;

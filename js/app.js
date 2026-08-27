@@ -225,9 +225,28 @@ function renderAuthUI() {
   const box = document.getElementById("authBox");
   const myWrap = document.getElementById("myToggleWrap");
   if (currentUser) {
-    box.innerHTML = `<span style="font-size:14px;color:#555">${currentUser.email}</span>
-      <button class="btn-cancel" style="padding:9px 16px" id="btnLogout">Выйти</button>`;
-    document.getElementById("btnLogout").addEventListener("click", logout);
+    box.innerHTML = `
+      <div class="account-menu" id="accountMenu">
+        <button class="account-trigger" id="accountTrigger">Личный кабинет <span class="account-caret">▾</span></button>
+        <div class="account-dropdown" id="accountDropdown">
+          <a class="account-item" id="menuCabinet" href="#">Кабинет</a>
+          <a class="account-item account-item-logout" id="menuLogout" href="#">⏎ Выход</a>
+        </div>
+      </div>`;
+    const menu = document.getElementById("accountMenu");
+    document.getElementById("accountTrigger").addEventListener("click", (e) => {
+      e.stopPropagation();
+      menu.classList.toggle("open");
+    });
+    document.getElementById("menuCabinet").addEventListener("click", (e) => {
+      e.preventDefault();
+      menu.classList.remove("open");
+    });
+    document.getElementById("menuLogout").addEventListener("click", (e) => {
+      e.preventDefault();
+      menu.classList.remove("open");
+      logout();
+    });
     myWrap.style.display = "flex";
   } else {
     box.innerHTML = `<button class="btn-add" style="background:#0a6dd6" id="btnLogin">Войти</button>`;
@@ -1350,6 +1369,13 @@ document.getElementById("f_photo").addEventListener("change", () => {
     img.src = URL.createObjectURL(file);
     preview.appendChild(img);
   });
+});
+
+// клик вне меню "Личный кабинет" — закрыть (меню каждый раз перерисовывается,
+// поэтому слушатель один, глобальный, ищет элемент заново)
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("accountMenu");
+  if (menu && !menu.contains(e.target)) menu.classList.remove("open");
 });
 
 /* КНОПКИ И ПОЛЯ */
