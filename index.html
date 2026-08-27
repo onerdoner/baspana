@@ -105,7 +105,7 @@
       <div class="filter-grid-3col" id="filterExtended">
 
         <!-- Колонка 1: Тип дома, Год постройки, ЖК, Санузел -->
-        <div class="fg-col">
+        <div class="fg-col" id="saleCol1">
           <div class="fg-row">
             <span class="fg-label">Тип дома</span>
             <select id="houseType" class="fg-select">
@@ -124,15 +124,15 @@
               <input type="number" id="yearTo" class="fg-input" placeholder="до">
             </div>
           </div>
-          <div class="fg-row">
+          <div class="fg-row" id="rowComplex">
             <span class="fg-label">Жилой комплекс</span>
             <select id="complex" class="fg-select"><option value="">Любой ЖК</option></select>
           </div>
         </div>
 
         <!-- Колонка 2: Этаж, Не последний, Не первый -->
-        <div class="fg-col">
-          <div class="fg-row">
+        <div class="fg-col" id="saleCol2">
+          <div class="fg-row" id="rowFloor">
             <span class="fg-label">Этаж</span>
             <div class="fg-range">
               <input type="number" id="floorFrom" class="fg-input" placeholder="от">
@@ -140,16 +140,16 @@
               <input type="number" id="floorTo" class="fg-input" placeholder="до">
             </div>
           </div>
-          <div class="fg-row fg-row-check">
+          <div class="fg-row fg-row-check" id="rowNoLast">
             <label class="check"><input type="checkbox" id="noLast"> Не последний этаж</label>
           </div>
-          <div class="fg-row fg-row-check">
+          <div class="fg-row fg-row-check" id="rowNoFirst">
             <label class="check"><input type="checkbox" id="noFirst"> Не первый этаж</label>
           </div>
         </div>
 
         <!-- Колонка 3: Этажей в доме, Общая площадь, Площадь кухни -->
-        <div class="fg-col">
+        <div class="fg-col" id="saleCol3">
           <div class="fg-row">
             <span class="fg-label">Этажей в доме</span>
             <div class="fg-range">
@@ -158,7 +158,7 @@
               <input type="number" id="floorsTo" class="fg-input" placeholder="до">
             </div>
           </div>
-          <div class="fg-row">
+          <div class="fg-row" id="rowArea">
             <span class="fg-label">Общая площадь, м²</span>
             <div class="fg-range">
               <input type="number" id="areaFrom" class="fg-input" placeholder="от">
@@ -166,7 +166,7 @@
               <input type="number" id="areaTo" class="fg-input" placeholder="до">
             </div>
           </div>
-          <div class="fg-row">
+          <div class="fg-row" id="rowKitchen">
             <span class="fg-label">Площадь кухни, м²</span>
             <div class="fg-range">
               <input type="number" id="kitchenFrom" class="fg-input" placeholder="от">
@@ -177,6 +177,29 @@
         </div>
 
       </div><!-- /filter-grid-3col -->
+
+      <!-- Сетка для Аренды: ЖК+Площадь / Этаж+чекбоксы / Меблирована+животные+дети (см. setDeal) -->
+      <div class="filter-grid-3col" id="filterExtendedRent" style="display:none">
+        <div class="fg-col" id="rentCol1"></div>
+        <div class="fg-col" id="rentCol2"></div>
+        <div class="fg-col" id="rentCol3">
+          <div class="fg-row">
+            <span class="fg-label">Квартира меблирована</span>
+            <select id="furnished" class="fg-select">
+              <option value="any">не важно</option>
+              <option value="yes">да</option>
+              <option value="no">нет</option>
+            </select>
+          </div>
+          <div class="fg-row fg-row-check">
+            <label class="check"><input type="checkbox" id="fPets"> Можно с животными</label>
+          </div>
+          <div class="fg-row fg-row-check">
+            <label class="check"><input type="checkbox" id="fKids"> Можно с детьми</label>
+          </div>
+        </div>
+      </div>
+      <div id="rentTextWrap" style="display:none"></div>
 
       <!-- Ещё настройки (скрыто до клика) -->
       <div class="filter-more" id="filterMore" style="display:none">
@@ -232,15 +255,9 @@
 
         </div>
         <!-- Поиск по тексту — на всю ширину, внизу блока -->
-        <div class="fg-row fg-text-row">
+        <div class="fg-row fg-text-row" id="rowTextSearch">
           <span class="fg-label">Поиск по тексту</span>
           <input type="text" id="textSearch" placeholder="улица, район, описание…" class="fg-text-search-wide">
-        </div>
-        <!-- Скрытые поля: логика сохраняется, в UI не показываются -->
-        <div style="display:none">
-          <select id="furnished"><option value="any">не важно</option><option value="yes">да</option><option value="no">нет</option></select>
-          <input type="checkbox" id="fKids">
-          <input type="checkbox" id="fPets">
         </div>
       </div>
 

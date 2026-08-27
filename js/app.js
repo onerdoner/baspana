@@ -741,6 +741,7 @@ function showHomeView() {
   document.getElementById("deal").style.display = "";
   // Скрываем поисковые метки
   document.querySelectorAll(".fls-prefix,.fls-suffix,.fls-tg").forEach(el => el.style.display = "none");
+  positionRentPeriod();
   // Восстанавливаем подпись цены
   document.getElementById("priceLabel").textContent = "Цена, ₸";
   // Показываем Найти / На карте
@@ -772,8 +773,10 @@ function showSearchView(mapMode) {
   document.getElementById("detail").classList.remove("open");
   // Скрываем переключатель Купить/Арендовать
   document.getElementById("deal").style.display = "none";
-  // Показываем поисковые метки
+  // Показываем поисковые метки ("Квартиры" — только для Продажи, у Аренды на этом месте период)
   document.querySelectorAll(".fls-prefix,.fls-suffix,.fls-tg").forEach(el => el.style.display = "");
+  document.querySelector(".fls-prefix").style.display = activeDeal === "rent" ? "none" : "";
+  positionRentPeriod();
   // Меняем подпись цены
   document.getElementById("priceLabel").textContent = "Цена";
   // Скрываем Найти / На карте
@@ -872,8 +875,7 @@ function deserializeFilters(p) {
   document.querySelectorAll("#deal button").forEach(b => b.classList.toggle("on", b.dataset.d === deal));
   document.getElementById("navSale").classList.toggle("active", deal === "sale");
   document.getElementById("navRent").classList.toggle("active", deal === "rent");
-  document.getElementById("rentOnly").style.display = deal === "rent" ? "inline-flex" : "none";
-  document.querySelectorAll(".sale-only").forEach(el => el.style.display = deal === "rent" ? "none" : "");
+  applyDealVisibility(deal);
 
   const city = p.get("city") || "Алматы";
   document.getElementById("city").value = city;
@@ -1201,6 +1203,55 @@ async function renderSimilar(item) {
 }
 
 /* ПЕРЕКЛЮЧЕНИЕ ТИПА СДЕЛКИ */
+// переставляет общие поля (ЖК, площадь, этаж, чекбоксы этажа, поиск по тексту)
+// между сеткой Продажи и сеткой Аренды — сами элементы не пересоздаются,
+// просто переезжают в нужный контейнер (как и filterRowChecks выше).
+function layoutFiltersForDeal(d) {
+  const rowComplex = document.getElementById("rowComplex");
+  const rowArea = document.getElementById("rowArea");
+  const rowKitchen = document.getElementById("rowKitchen");
+  const rowFloor = document.getElementById("rowFloor");
+  const rowNoFirst = document.getElementById("rowNoFirst");
+  const rowNoLast = document.getElementById("rowNoLast");
+  const rowTextSearch = document.getElementById("rowTextSearch");
+  if (d === "rent") {
+    document.getElementById("rentCol1").append(rowComplex, rowArea);
+    document.getElementById("rentCol2").append(rowFloor, rowNoFirst, rowNoLast);
+    document.getElementById("rentTextWrap").append(rowTextSearch);
+  } else {
+    document.getElementById("saleCol1").append(rowComplex);
+    document.getElementById("saleCol3").insertBefore(rowArea, rowKitchen);
+    document.getElementById("saleCol2").append(rowFloor, rowNoLast, rowNoFirst);
+    document.getElementById("filterMore").append(rowTextSearch);
+  }
+}
+
+// переставляет период аренды в начало строки на странице поиска (как на krisha.kz);
+// на главной остаётся на обычном месте — перед ценой
+function positionRentPeriod() {
+  const rentOnly = document.getElementById("rentOnly");
+  const row1 = document.getElementById("filterRow1");
+  const priceLabel = document.getElementById("priceLabel");
+  if (currentView === "search" && activeDeal === "rent") {
+    row1.insertBefore(rentOnly, row1.firstChild);
+  } else {
+    row1.insertBefore(rentOnly, priceLabel);
+  }
+}
+
+// всё, что зависит только от типа сделки (не от текущего вида страницы)
+function applyDealVisibility(d) {
+  document.getElementById("rentOnly").style.display = d === "rent" ? "inline-flex" : "none";
+  document.querySelectorAll(".sale-only").forEach(el => el.style.display = d === "rent" ? "none" : "");
+  document.getElementById("filterExtended").style.display = d === "rent" ? "none" : "";
+  document.getElementById("filterExtendedRent").style.display = d === "rent" ? "" : "none";
+  document.getElementById("rentTextWrap").style.display = d === "rent" ? "" : "none";
+  document.getElementById("btnMoreSettings").style.display = d === "rent" ? "none" : "";
+  document.getElementById("filterMore").style.display = "none";
+  document.getElementById("btnMoreSettings").textContent = "⊞ Ещё настройки ▾";
+  layoutFiltersForDeal(d);
+}
+
 function setDeal(d) {
   activeDeal = d;
   favMode = false;
@@ -1208,9 +1259,11 @@ function setDeal(d) {
   document.querySelectorAll("#deal button").forEach(b => b.classList.toggle("on", b.dataset.d === d));
   document.getElementById("navSale").classList.toggle("active", d === "sale");
   document.getElementById("navRent").classList.toggle("active", d === "rent");
-  document.getElementById("rentOnly").style.display = d === "rent" ? "inline-flex" : "none";
-  document.querySelectorAll(".sale-only").forEach(el => el.style.display = d === "rent" ? "none" : "");
-  document.querySelectorAll(".rent-only").forEach(el => el.style.display = d === "rent" ? "" : "none");
+  applyDealVisibility(d);
+  if (currentView === "search") {
+    document.querySelector(".fls-prefix").style.display = d === "rent" ? "none" : "";
+  }
+  positionRentPeriod();
   document.getElementById("priceFrom").value = "";
   document.getElementById("priceTo").value = "";
   updateCount();
