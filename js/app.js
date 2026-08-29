@@ -31,6 +31,47 @@ const COMPLEXES = {
     "Nova City","O'NER Towers","Sensata","Tumar","Verdi","Vista",
     "Аскарова","Бельведер","Керемет","Мерей","Ремизовка","Розмарин",
     "Сымбат","Тау Самал","Экватор",
+    // Полный список ЖК с krisha.kz (страница "Популярные новостройки в Алматы")
+    "Аль-Фараби","Gulder","Горное Солнце","Династия","Riviera","Medeu City","Dostyk",
+    "Комфорт Сити","Nest Grand","Etasa Residence","Kokjiek City","Родник",
+    "Коттеджный городок Tauda Villa 3.0","Клубный дом Seneca","RAMS Saiahat",
+    "Boulevard Residence","Exclusive Opera","Arena Park","Noble House","Aisafi",
+    "Oslo Residence","Magnit Alatau","TUMANBAY MOLDAGALIYEV","Prime Park","Vesper",
+    "Аврора","Zangar","Alkey Margulan","Saulet","RAMS City","1st by BI",
+    "Arena City. Life","Arena City. Park","Каспий","Status 2.0","Miras Park",
+    "Чешские террасы","Тан Нуры","Luxury Park","Lancashire","Exclusive Юбилейный",
+    "Green City","Auezov City","PRIMAVERA","Aulet","ORDA CITY","Munar Tau",
+    "Коттеджный городок Regis Hills","Nurly Dala 2","Jana Arbat","Royal Time",
+    "Клубный дом на Жамакаева","Loro Residence","MEREI","Altyn Ai","Arena Sunset",
+    "Seifullin","UMAI","Kenesary","DOSTYQ 300","Клубный дом Benelux","Asyl Tas",
+    "Selin Residence","Centrium",
+    "ASYL MURA","Orient","Ayala Park","Apple Residence","NEOPARK","Biography",
+    "Бигвилль Dream City. Family","Maxima City","DASTUR","AURUS",
+    "Arena City. Balance","Бигвилль Arena City. Sport","Palladium","Legenda",
+    "Аманат","Жандосова","4YOU","Клубный дом Grande Vie","Атмосфера",
+    "AL'FARABI 27","Aqtolqyn Grand","SEYFULLIN PARK","M. Park","Северный",
+    "Клубный дом La Era de Aquarius","Mereke","Turan",
+    "Коттеджный городок Sunrise Village","Birlik","Raaf Park","Клубный дом Baitas",
+    "Мадениет 1","River City","Таунхаус Remizovka Life","Клубный дом Tamga Residence",
+    "Mangilik","Riviera PLUS","Жайна","BAIQADAM","Kosmonavtova","El Monte",
+    "Коттеджный городок Дубровка","Hayat Arena","Jan Dostar","Madeniet",
+    "Nurlitau Hills","KAMENKA LUXURY","Vendome","South Garden","Alatau House",
+    "Parasat","NOVA","Ansar","Клубный дом PARKVILLE","Satpaev","RAMS EVO",
+    "Бигвилль Dream City. Eco","Abay 130","Orion III","Jazz-квартал","Хан Тенгри",
+    "Таунхаус Blackberry Hills","Metropole","Qarasai Park",
+    "Европолис","Alasha Residence","Seven Hills","Gul-Ana","Estet","Lifetown",
+    "BUTA Legacy","Miracle","Hayat Meliora","Kamila","BUTA Fenomen","Autograph",
+    "Айнабулак 33/2","Клубный дом 44","Ulytau","Aspen","Наследие","Kaycap",
+    "На Кассина","Habi park","BASTION","O'NER","BUTA Albion","Жетысу (Казстрой)",
+    "Shabyt","Everest Boulevard","Жас Отау","Jar-Jar","Privilegia","Hayat Astoria",
+    "Клубный дом Millenium","Tarlan","Melody","Admiral","Synergy Towers",
+    "BUTA Meken","Dream City. Promenade","Клубный дом Silva Residence",
+    "Sunny Village","Бигвилль Jibek Joly","Diamond","Satay","Altai City",
+    "Kamenka Park","Koktobe city","КУАТ на Масанчи — Абая","Клубный дом De Ville",
+    "AMIR","President's Park","Megapolis","R-House","Apple Park","Nurly Dala",
+    "Elif Garden","Jetisu Park","Ozhet Plus","Exclusive Duet","QAZYNA",
+    "Таунхаус Garden House","Достар Deluxe","Arman City","DAS HAUS",
+    "Alma Villa Deluxe","BUTA Legend","Hayat Regency",
   ],
   "Астана": ["Triumph Astana","Nurly Tau","Capital Hill","Highvill","Park View","Expo City","Riverside"],
   "Шымкент": ["Нурлы Жол","Арман","Достык Plaza","Алтын Орда"],
@@ -364,7 +405,10 @@ function buildQuery(query) {
   query = query.eq("deal_type", f.deal);
   if (f.city) query = query.eq("city", f.city);
   if (f.district) query = query.eq("district", f.district);
-  if (f.complex) query = query.eq("complex", f.complex);
+  // "Любой ЖК" — только квартиры, у которых вообще указан жилой комплекс.
+  // Пустой вариант (по умолчанию) — без ограничения: и с ЖК, и без (монолитный/кирпичный и т.д.)
+  if (f.complex === "any") query = query.not("complex", "is", null);
+  else if (f.complex) query = query.eq("complex", f.complex);
   if (f.rooms.length) {
     // 5+ означает "5 и больше". Собираем условие ИЛИ.
     const parts = f.rooms.map(r => r === 5 ? "rooms.gte.5" : `rooms.eq.${r}`);
@@ -1758,7 +1802,7 @@ function fillDistricts(selectEl, city, withAll) {
 const complexFilter = document.getElementById("complex");
 const complexForm = document.getElementById("f_complex");
 function fillComplexes(city) {
-  complexFilter.innerHTML = '<option value="">Любой ЖК</option>';
+  complexFilter.innerHTML = '<option value=""></option><option value="any">Любой ЖК</option>';
   complexForm.innerHTML = '<option value="">— не указан —</option>';
   (COMPLEXES[city] || []).forEach(name => {
     const o1 = document.createElement("option"); o1.value = name; o1.textContent = name; complexFilter.appendChild(o1);
