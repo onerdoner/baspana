@@ -284,6 +284,14 @@
   /* страница объявления — обычная страница сайта, не оверлей */
   .detail { display: none; padding: 20px 0 40px; }
   .detail.open { display: block; }
+
+  /* страница ЖК — пока просто заглушка, своих данных о комплексах нет */
+  .complex-page { display: none; padding: 20px 0 40px; }
+  .complex-page.open { display: block; }
+  .complex-page-inner { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+  .complex-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+  .complex-empty { color: #999; padding: 40px 0; }
+  .complex-link { color: var(--blue); text-decoration: underline; cursor: pointer; }
   .detail-inner { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
   .breadcrumbs { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
   .breadcrumbs a { color: var(--text-muted); }

@@ -29,48 +29,53 @@ No test suite exists.
 
 ## Architecture
 
-Vanilla JS SPA built with Vite. Three files contain everything:
+Vanilla JS SPA built with Vite, no framework.
 
-- `index.html` — all markup and DOM structure (218 lines)
-- `css/styles.css` — all styles (no framework)
-- `js/app.js` — all application logic (~700 lines)
+- `index.html` — all markup and DOM structure
+- `css/styles.css` — all styles
+- `js/` — application logic, split into ES modules (see below). Entry point is `js/main.js`, loaded from `index.html` as `<script type="module">`.
 
 ### Backend
 
-Supabase is the only backend. The publishable URL and anon key are hardcoded at the top of `app.js` — these are safe to commit (Row Level Security enforces access control on Supabase's side).
+Supabase is the only backend. The publishable URL and anon key are hardcoded at the top of `js/config.js` — these are safe to commit (Row Level Security enforces access control on Supabase's side).
 
 **Tables:**
-- `listings` — core table; columns include `id`, `user_id`, `deal_type` (sale/rent), `city`, `district`, `complex`, `rooms`, `price`, `area`, `floor`, `floors_total`, `lat`, `lng`, `images` (JSON array), `furnished`, `kids_allowed`, `pets_allowed`, `rent_period`, `is_new`, `has_photo`, `color`, `created_at`
-- `favorites` — `listing_id` + `user_id` join table
+- `listings` — core table; columns include `id`, `user_id`, `deal_type` (sale/rent), `city`, `district`, `complex`, `rooms`, `price`, `area`, `floor`, `floors_total`, `lat`, `lng`, `images` (JSON array), `furnished`, `kids_allowed`, `pets_allowed`, `rent_period`, `is_new`, `has_photo`, `color`, `created_at`, plus many optional attribute columns added later (ceiling_height, door_type, parking, balcony, kitchen_studio, security, house_number, cross_street, hide_house_number, phone_line, internet, balcony_glazed, floor_type, features, contact_name, phones, seller_type, pledged, ex_dormitory, exchange, kitchen_area, bathroom, house_type, year_built, condition)
+- `favorites` — `listing_id` + `user_id` (+ `created_at`, used to sort "Избранное" by most-recently-added-first)
+- `notes` — `listing_id` + `user_id` + `text` + `updated_at`
 
 **Storage:** `listing-photos` bucket for multi-photo uploads.
 
-### app.js structure (by concern)
+### js/ module map (by concern)
 
-| Lines | Concern |
-|-------|---------|
-| 1–48 | Supabase init, constants (`CITIES`, `COMPLEXES`, `PAGE_SIZE=24`, `COLORS`) |
-| 49–134 | Auth (sign in / sign up / sign out, current user state) |
-| 135–202 | Favorites toggle + favorites rendering |
-| 203–330 | `fetchListings()` — query builder with all active filters applied server-side; pagination |
-| 330–474 | Card rendering, map marker rendering, price formatting |
-| 474–555 | Detail view (photo gallery, mini-map, phone reveal) |
-| 555–703 | Filter controls, sort, view switching (list ↔ map), event bindings |
+| File | Concern |
+|------|---------|
+| `main.js` | Entry point — imports every module (each wires its own DOM listeners on import), defines URL routing (`routeFromUrl`) and app start |
+| `config.js` | Supabase URL/key, `CITIES`, `COLORS`, `COMPLEXES`, `PAGE_SIZE` — pure constants |
+| `state.js` | One shared mutable `state` object (currentUser, favMode, activeDeal, currentView, currentPage, sortBy, db client instance, etc.) — every module imports `{ state }` and reads/writes its fields directly |
+| `format.js` | Price formatting, `escapeHtml`, card info line, seller badge, `showBanner` |
+| `db.js` | `initDb()` — creates/reuses the Supabase client on `state.db` |
+| `auth.js` | Sign in / sign up / sign out, "Личный кабинет" dropdown, auth modal |
+| `favorites.js` | Like/unlike, favorites count, "Очистить избранное" |
+| `notes.js` | Note modal (create/edit/delete), per-card note preview |
+| `confirm-dialog.js` | Generic reusable confirm modal (used by note delete, listing delete, etc.) |
+| `listings-query.js` | `rowToItem` (DB row → camelCase item), `buildQuery`/`getFilters`/`applySort` (server-side filtering), URL `serializeFilters`/`deserializeFilters` |
+| `map-instance.js` | The main Leaflet list/map instance + marker rendering |
+| `search-list.js` | Card list rendering, pagination, `update()` (fetch + render one page) |
+| `search-view.js` | Home ↔ search view switching, Продажа/Аренда layout, city/district/ЖК select population, most filter-panel button bindings |
+| `list-modes.js` | "Избранное" and "Мои объявления" (Кабинет) list modes — hides the filter panel/sort bar, shows the right empty state |
+| `hot-offers.js` | "Горячие предложения" home page carousels |
+| `listing-detail.js` | Single listing page, photo lightbox, "Похожие объявления" |
+| `complex-page.js` | ЖК (residential complex) page — currently a placeholder, no complex data yet |
+| `submit-form.js` | "Подать объявление" — category picker, full form, client-side validation, submit/delete |
+| `city-modal.js` | Город/район picker modal |
 
-### Key global state
-
-- `currentUser` — Supabase auth user or null
-- `favoriteIds` — `Set` of liked listing IDs
-- `activeDeal` — `"sale"` or `"rent"`
-- `activeRooms` — array of selected room counts
-- `currentPage` — current pagination page
-- `sortBy` — `"new"` | `"cheap"` | `"exp"`
-- `favMode` — boolean, favorites-only view
+Several modules import each other in both directions (e.g. `auth.js` ↔ `favorites.js` ↔ `list-modes.js` ↔ `search-view.js`). This is intentional and safe: every cross-import is only used *inside* a function body (event handler, async function), never at a module's top level, so there's no evaluation-order problem — by the time any of those functions actually runs, all modules are already fully loaded.
 
 ### Map
 
-Leaflet 1.9.4 + LeafletMarkerCluster via CDN (not npm). Two Leaflet map instances exist: the main list/map view and the mini-map on the detail panel. Coordinates for each listing are generated at creation time from district center coordinates + a small random offset.
+Leaflet 1.9.4 + LeafletMarkerCluster via CDN (not npm, loaded as global `L` in `index.html`). Two Leaflet map instances exist: the main list/map view (`map-instance.js`) and the mini-map on the detail panel (`state.detailMap`, created in `listing-detail.js`). Coordinates for each listing are generated at creation time from district center coordinates + a small random offset (the submission form instead uses a draggable marker, see `initFormMap` in `submit-form.js`).
 
 ### Adding filters
 
-All filtering is server-side in `fetchListings()`. Add new filter fields to the Supabase `.eq()` / `.gte()` / `.lte()` chain there, and wire up the corresponding DOM element in the filter event handlers at the bottom of `app.js`.
+All filtering is server-side in `buildQuery()` (`js/listings-query.js`). Add new filter fields to the Supabase `.eq()` / `.gte()` / `.lte()` chain there (`getFilters()` reads the raw DOM values), and wire up the corresponding DOM element's change/input listener in `search-view.js`.

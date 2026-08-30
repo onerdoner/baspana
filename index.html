@@ -62,7 +62,7 @@
         </div>
         <!-- Только поиск: суффикс "- комн." -->
         <span class="fls-suffix" style="display:none">- комн.</span>
-        <!-- Скрытые селекты (нужны app.js) -->
+        <!-- Скрытые селекты (нужны js/) -->
         <select id="city" hidden></select>
         <select id="district" hidden><option value="">Все районы</option></select>
         <!-- Всегда: кнопка города -->
@@ -275,7 +275,7 @@
 
     </div><!-- /filter-zone-light -->
 
-    <!-- Скрытые элементы: нужны app.js -->
+    <!-- Скрытые элементы: нужны js/ -->
     <div style="display:none">
       <label id="myToggleWrap"><input type="checkbox" id="onlyMine"></label>
     </div>
@@ -847,6 +847,15 @@
   </div>
 </div>
 
+<!-- СТРАНИЦА ЖК (пока пустая — своих данных о комплексах ещё нет) -->
+<div class="complex-page" id="complexPage">
+  <div class="complex-page-inner">
+    <div class="breadcrumbs" id="complexBreadcrumbs"></div>
+    <h1 class="complex-title" id="complexTitle"></h1>
+    <div class="complex-empty">Информация об этом жилом комплексе скоро появится.</div>
+  </div>
+</div>
+
 <!-- Попап "Заполните обязательные поля" — форма подачи объявления -->
 <div class="form-toast" id="formToast" style="display:none">
   <div class="form-toast-icon">!</div>
@@ -864,6 +873,6 @@
   <button class="lb-arrow lb-next" id="lbNext">❯</button>
 </div>
 
-<script type="module" src="/js/app.js"></script>
+<script type="module" src="/js/main.js"></script>
 </body>
 </html>
